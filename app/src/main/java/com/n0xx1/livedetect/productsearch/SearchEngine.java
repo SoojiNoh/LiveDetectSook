@@ -7,6 +7,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.tasks.Tasks;
+import com.n0xx1.livedetect.BuildConfig;
 import com.n0xx1.livedetect.objectdetection.DetectedObject;
 
 import java.util.ArrayList;
@@ -15,6 +16,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class SearchEngine {
+
+    private static final String CLOUD_VISION_API_KEY = BuildConfig.apikey;
+
+    private static final String ANDROID_CERT_HEADER = "X-Android-Cert";
+    private static final String ANDROID_PACKAGE_HEADER = "X-Android-Package";
+
+
+
 
     private static final String TAG = "SearchEngine";
 
