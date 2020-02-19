@@ -47,7 +47,7 @@ dependencies {
     implementation "android.arch.lifecycle:extensions:1.1.1"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.1.0"
 
-    api 'com.google.guava:guava:27.1-jre'
+//    api 'com.google.guava:guava:27.1-jre'
 
     // MLKit Dependencies
     implementation 'com.google.firebase:firebase-ml-vision:24.0.0'

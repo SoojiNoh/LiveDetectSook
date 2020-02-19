@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        searchEngine = new SearchEngine(getApplicationContext());
+        searchEngine = new SearchEngine(getApplicationContext(), this);
 
         setContentView(R.layout.activity_live_object);
         preview = findViewById(R.id.camera_preview);
@@ -281,7 +281,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         // Observes changes on the object to search, if happens, fire product search request.
         workflowModel.objectToSearch.observe(
-                this, object -> searchEngine.search(object, workflowModel));
+                this, object -> searchEngine.search(this, object, workflowModel));
 
         // Observes changes on the object that has search completed, if happens, show the bottom sheet
         // to present search result.
