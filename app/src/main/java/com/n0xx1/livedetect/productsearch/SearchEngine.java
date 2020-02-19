@@ -237,8 +237,8 @@ public class SearchEngine {
                 List<EntityAnnotation> texts = result.getResponses().get(0).getTextAnnotations();
 
 
-                if (labels != null) {
-                    for (int i = 0; i < 10; i++) {
+                if (!labels.isEmpty()) {
+                    for (int i = 0; i < labels.size(); i++) {
 
                         EntityAnnotation label = labels.get(i);
                         productList.add(
@@ -246,10 +246,12 @@ public class SearchEngine {
                     }
 
                 } else {
-                    for (int i = 0; i < 8; i++) {
-                        productList.add(
-                                new Product(/* imageUrl= */ "", "Product title " + i, "Product subtitle " + i));
-                    }
+
+                    Log.d(TAG, "no search result");
+//                    for (int i = 0; i < 8; i++) {
+//                        productList.add(
+//                                new Product(/* imageUrl= */ "", "Product title " + i, "Product subtitle " + i));
+//                    }
                 }
 
 
