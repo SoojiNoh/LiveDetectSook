@@ -79,6 +79,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         graphicOverlay.setOnClickListener(this);
         cameraSource = new CameraSource(graphicOverlay);
 
+        cameraSource.setMachineLearningFrameProcessor(new TextRecognitionProcessor());
+
         promptChip = findViewById(R.id.bottom_prompt_chip);
         promptChipAnimator =
                 (AnimatorSet) AnimatorInflater.loadAnimator(this, R.animator.bottom_prompt_chip_enter);

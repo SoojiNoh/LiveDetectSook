@@ -518,4 +518,16 @@ public class CameraSource {
             }
         }
     }
+
+
+
+    public void setMachineLearningFrameProcessor(TextRecognitionProcessor processor) {
+        synchronized (processorLock) {
+            cleanScreen();
+            if (frameProcessor != null) {
+                frameProcessor.stop();
+            }
+            frameProcessor = processor;
+        }
+    }
 }

@@ -38,6 +38,31 @@ public class GraphicOverlay extends View {
 
         /** Draws the graphic on the supplied canvas. */
         protected abstract void draw(Canvas canvas);
+
+        public void postInvalidate() {
+            overlay.postInvalidate();
+        }
+
+
+        /**
+         * Adjusts the x coordinate from the preview's coordinate system to the view coordinate system.
+         */
+//        public float translateX(float x) {
+//            if (overlay.facing == com.google.android.gms.vision.CameraSource.CAMERA_FACING_FRONT) {
+//                return overlay.getWidth() - scaleX(x);
+//            } else {
+//                return scaleX(x);
+//            }
+//        }
+//
+//        /**
+//         * Adjusts the y coordinate from the preview's coordinate system to the view coordinate system.
+//         */
+//        public float translateY(float y) {
+//            return scaleY(y);
+//        }
+
+
     }
 
     public GraphicOverlay(Context context, AttributeSet attrs) {
@@ -111,5 +136,10 @@ public class GraphicOverlay extends View {
             }
         }
     }
+
+
+
+
+
 }
 
