@@ -68,6 +68,7 @@ public abstract class FrameProcessorBase<T> implements FrameProcessor {
 
     protected abstract Task<T> detectInImage(FirebaseVisionImage image);
 
+
     /** Be called when the detection succeeds. */
     protected abstract void onSuccess(
             FirebaseVisionImage image, T results, GraphicOverlay graphicOverlay);

@@ -49,6 +49,8 @@ public class CameraSource {
     private final Object processorLock = new Object();
     private FrameProcessor frameProcessor;
 
+
+
     /**
      * Map to convert between a byte array, received from the camera, and its associated byte buffer.
      * We use byte buffers internally because this is a more efficient way to call into native code
@@ -519,15 +521,4 @@ public class CameraSource {
         }
     }
 
-
-
-    public void setMachineLearningFrameProcessor(TextRecognitionProcessor processor) {
-        synchronized (processorLock) {
-            cleanScreen();
-            if (frameProcessor != null) {
-                frameProcessor.stop();
-            }
-            frameProcessor = processor;
-        }
-    }
 }

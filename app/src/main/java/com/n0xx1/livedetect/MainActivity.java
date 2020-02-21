@@ -11,13 +11,15 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
+import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.lifecycle.ViewModelProviders;
 
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.chip.Chip;
@@ -38,6 +40,7 @@ import com.n0xx1.livedetect.productsearch.SearchEngine;
 import com.n0xx1.livedetect.productsearch.SearchedObject;
 import com.n0xx1.livedetect.settings.PreferenceUtils;
 import com.n0xx1.livedetect.settings.SettingsActivity;
+import com.n0xx1.livedetect.textdetection.TextRecognitionProcessor;
 
 import java.io.IOException;
 import java.util.List;
@@ -51,6 +54,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private GraphicOverlay graphicOverlay;
     private View settingsButton;
     private View flashButton;
+    private Switch textSwitch;
     private Chip promptChip;
     private AnimatorSet promptChipAnimator;
     private ExtendedFloatingActionButton searchButton;
@@ -79,8 +83,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         graphicOverlay.setOnClickListener(this);
         cameraSource = new CameraSource(graphicOverlay);
 
-        cameraSource.setMachineLearningFrameProcessor(new TextRecognitionProcessor());
-
         promptChip = findViewById(R.id.bottom_prompt_chip);
         promptChipAnimator =
                 (AnimatorSet) AnimatorInflater.loadAnimator(this, R.animator.bottom_prompt_chip_enter);
@@ -101,6 +103,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         flashButton.setOnClickListener(this);
         settingsButton = findViewById(R.id.settings_button);
         settingsButton.setOnClickListener(this);
+        textSwitch = findViewById(R.id.text_switch);
+        textSwitch.setOnClickListener(this);
 
         setUpWorkflowModel();
     }
@@ -114,9 +118,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         currentWorkflowState = WorkflowState.NOT_STARTED;
         cameraSource.setFrameProcessor(
-                PreferenceUtils.isMultipleObjectsMode(this)
-                        ? new MultiObjectProcessor(graphicOverlay, workflowModel)
-                        : new ProminentObjectProcessor(graphicOverlay, workflowModel));
+                textSwitch.isChecked()?
+                        new TextRecognitionProcessor(graphicOverlay, workflowModel)
+                        : (PreferenceUtils.isMultipleObjectsMode(this)
+                            ? new MultiObjectProcessor(graphicOverlay, workflowModel)
+                            : new ProminentObjectProcessor(graphicOverlay, workflowModel)));
         workflowModel.setWorkflowState(WorkflowState.DETECTING);
     }
 
@@ -173,8 +179,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             settingsButton.setEnabled(false);
             startActivity(new Intent(this, SettingsActivity.class));
 
+        } else if (id == R.id.text_switch) {
+            if (textSwitch.isChecked()){
+                Toast.makeText(getApplicationContext(),
+                    "text detection mode", Toast.LENGTH_LONG).show();
+                cameraSource.setFrameProcessor(new TextRecognitionProcessor(graphicOverlay, workflowModel));
+            } else {
+                Toast.makeText(getApplicationContext(),
+                        "object detection mode", Toast.LENGTH_LONG).show();
+                cameraSource.setFrameProcessor(PreferenceUtils.isMultipleObjectsMode(this)
+                        ? new MultiObjectProcessor(graphicOverlay, workflowModel)
+                        : new ProminentObjectProcessor(graphicOverlay, workflowModel));
+                workflowModel.setWorkflowState(WorkflowState.DETECTING);
+            }
         }
     }
+
+
 
     private void startCameraPreview() {
         if (!workflowModel.isCameraLive() && cameraSource != null) {

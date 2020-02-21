@@ -1,4 +1,4 @@
-package com.n0xx1.livedetect.camera;
+package com.n0xx1.livedetect.textdetection;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -6,6 +6,7 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 
 import com.google.firebase.ml.vision.text.FirebaseVisionText;
+import com.n0xx1.livedetect.camera.GraphicOverlay;
 
 /**
  * Graphic instance for rendering TextBlock position, size, and ID within an associated graphic
@@ -19,6 +20,7 @@ public class TextGraphic extends GraphicOverlay.Graphic {
 
     private final Paint rectPaint;
     private final Paint textPaint;
+    private final RectF rect;
     private final FirebaseVisionText.Element text;
 
     TextGraphic(GraphicOverlay overlay, FirebaseVisionText.Element text) {
@@ -30,6 +32,12 @@ public class TextGraphic extends GraphicOverlay.Graphic {
         rectPaint.setColor(TEXT_COLOR);
         rectPaint.setStyle(Paint.Style.STROKE);
         rectPaint.setStrokeWidth(STROKE_WIDTH);
+
+        rect = new RectF(text.getBoundingBox());
+        rect.left =  overlay.translateX(rect.left);
+        rect.top = overlay.translateY(rect.top);
+        rect.right = overlay.translateX(rect.right);
+        rect.bottom = overlay.translateY(rect.bottom);
 
         textPaint = new Paint();
         textPaint.setColor(TEXT_COLOR);
@@ -46,11 +54,7 @@ public class TextGraphic extends GraphicOverlay.Graphic {
         }
 
         // Draws the bounding box around the TextBlock.
-        RectF rect = new RectF(text.getBoundingBox());
-        rect.left = translateX(rect.left);
-        rect.top = translateY(rect.top);
-        rect.right = translateX(rect.right);
-        rect.bottom = translateY(rect.bottom);
+
         canvas.drawRect(rect, rectPaint);
 
         // Renders the text at the bottom of the box.
