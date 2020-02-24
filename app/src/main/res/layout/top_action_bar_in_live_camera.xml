@@ -46,4 +46,14 @@
         android:contentDescription="@string/cd_text_toggle"
         />
 
+
+    <ImageView
+        android:id="@+id/barcode_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toStartOf="@id/text_switch"
+        android:padding="@dimen/top_action_button_padding"
+        android:contentDescription="@string/cd_flash_button"
+        app:srcCompat="@drawable/barcode_toggle"/>
+
 </RelativeLayout>

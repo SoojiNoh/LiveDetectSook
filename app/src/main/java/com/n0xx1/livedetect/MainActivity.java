@@ -26,6 +26,7 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import com.n0xx1.livedetect.barcode.BarcodeProcessor;
 import com.n0xx1.livedetect.camera.CameraSource;
 import com.n0xx1.livedetect.camera.CameraSourcePreview;
 import com.n0xx1.livedetect.camera.GraphicOverlay;
@@ -49,6 +50,10 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String TAG = "LiveObjectActivity";
+    private static final int MULTI_MODE = 0;
+    private static final int PROMI_MODE= 1;
+    private static final int TEXT_MODE = 2;
+    private static final int BARCODE_MODE = 3;
 
     private CameraSource cameraSource;
     private CameraSourcePreview preview;
@@ -56,6 +61,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private View settingsButton;
     private View flashButton;
     private Switch textSwitch;
+    private View barcodeButton;
     private Chip promptChip;
     private AnimatorSet promptChipAnimator;
     private ExtendedFloatingActionButton searchButton;
@@ -64,6 +70,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private WorkflowModel workflowModel;
     private WorkflowState currentWorkflowState;
     private SearchEngine searchEngine;
+    private Text2Speech tts;
 
     private BottomSheetBehavior<View> bottomSheetBehavior;
     private BottomSheetScrimView bottomSheetScrimView;
@@ -72,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Bitmap objectThumbnailForBottomSheet;
     private boolean slidingSheetUpFromHiddenState;
 
-    Text2Speech tts;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,6 +116,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         textSwitch = findViewById(R.id.text_switch);
         textSwitch.setOnClickListener(this);
 
+        barcodeButton = findViewById(R.id.barcode_button);
+        barcodeButton.setOnClickListener(this);
+
         tts = new Text2Speech(getApplicationContext(), this);
 
         setUpWorkflowModel();
@@ -123,12 +133,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         settingsButton.setEnabled(true);
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         currentWorkflowState = WorkflowState.NOT_STARTED;
-        cameraSource.setFrameProcessor(
-                textSwitch.isChecked()?
-                        new TextRecognitionProcessor(graphicOverlay, workflowModel)
-                        : (PreferenceUtils.isMultipleObjectsMode(this)
-                            ? new MultiObjectProcessor(graphicOverlay, workflowModel)
-                            : new ProminentObjectProcessor(graphicOverlay, workflowModel)));
+
+        setDetectMode();
         workflowModel.setWorkflowState(WorkflowState.DETECTING);
     }
 
@@ -186,22 +192,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             startActivity(new Intent(this, SettingsActivity.class));
 
         } else if (id == R.id.text_switch) {
-
-            if (textSwitch.isChecked()){
-                tts.speech("text mode");
-                Toast.makeText(getApplicationContext(),
-                    "text detection mode", Toast.LENGTH_LONG).show();
-                cameraSource.setFrameProcessor(new TextRecognitionProcessor(graphicOverlay, workflowModel));
-            } else {
-                tts.speech("object mode");
-                Toast.makeText(getApplicationContext(),
-                        "object detection mode", Toast.LENGTH_LONG).show();
-                cameraSource.setFrameProcessor(PreferenceUtils.isMultipleObjectsMode(this)
-                        ? new MultiObjectProcessor(graphicOverlay, workflowModel)
-                        : new ProminentObjectProcessor(graphicOverlay, workflowModel));
-                workflowModel.setWorkflowState(WorkflowState.DETECTING);
-            }
+            setDetectMode();
+        } else if (id == R.id.barcode_button) {
+            setDetectMode();
         }
+
+        barcodeButton.setSelected(false);
     }
 
 
@@ -223,6 +219,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (workflowModel.isCameraLive()) {
             workflowModel.markCameraFrozen();
             flashButton.setSelected(false);
+            barcodeButton.setSelected(false);
             preview.stop();
         }
     }
@@ -429,5 +426,54 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (shouldPlaySearchButtonEnteringAnimation && !searchButtonAnimator.isRunning()) {
             searchButtonAnimator.start();
         }
+    }
+
+    private void setDetectMode(){
+        if (barcodeButton.isSelected()){
+
+            barcodeButton.setSelected(false);
+
+            if (textSwitch.isChecked()) {
+                tts.speech("text mode");
+                Toast.makeText(getApplicationContext(),
+                        "text detection mode", Toast.LENGTH_LONG).show();
+                setProcessor(TEXT_MODE);
+            }
+            else {
+                tts.speech("object mode");
+                Toast.makeText(getApplicationContext(),
+                        "object detection mode", Toast.LENGTH_LONG).show();
+                if (PreferenceUtils.isMultipleObjectsMode(this))
+                    setProcessor(MULTI_MODE);
+                else
+                    setProcessor(PROMI_MODE);
+            }
+
+
+        }else {
+            barcodeButton.setSelected(true);
+            tts.speech("barcode mode");
+            Toast.makeText(getApplicationContext(),
+                    "barcode detection mode", Toast.LENGTH_LONG).show();
+            setProcessor(BARCODE_MODE);
+        }
+    }
+
+    private void setProcessor(int i){
+        switch(i) {
+            case MULTI_MODE:
+                cameraSource.setFrameProcessor(new MultiObjectProcessor(graphicOverlay, workflowModel));
+                break;
+            case PROMI_MODE:
+                cameraSource.setFrameProcessor(new ProminentObjectProcessor(graphicOverlay, workflowModel));
+                break;
+            case TEXT_MODE:
+                cameraSource.setFrameProcessor(new TextRecognitionProcessor(graphicOverlay, workflowModel));
+                break;
+            case BARCODE_MODE:
+                cameraSource.setFrameProcessor(new BarcodeProcessor(graphicOverlay, workflowModel));
+                break;
+        }
+
     }
 }
