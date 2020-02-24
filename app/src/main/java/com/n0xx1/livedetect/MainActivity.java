@@ -40,6 +40,7 @@ import com.n0xx1.livedetect.productsearch.SearchEngine;
 import com.n0xx1.livedetect.productsearch.SearchedObject;
 import com.n0xx1.livedetect.settings.PreferenceUtils;
 import com.n0xx1.livedetect.settings.SettingsActivity;
+import com.n0xx1.livedetect.text2speech.Text2Speech;
 import com.n0xx1.livedetect.textdetection.TextRecognitionProcessor;
 
 import java.io.IOException;
@@ -70,6 +71,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TextView bottomSheetTitleView;
     private Bitmap objectThumbnailForBottomSheet;
     private boolean slidingSheetUpFromHiddenState;
+
+    Text2Speech tts;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,7 +109,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         textSwitch = findViewById(R.id.text_switch);
         textSwitch.setOnClickListener(this);
 
+        tts = new Text2Speech(getApplicationContext(), this);
+
         setUpWorkflowModel();
+
     }
 
     @Override
@@ -180,11 +186,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             startActivity(new Intent(this, SettingsActivity.class));
 
         } else if (id == R.id.text_switch) {
+
             if (textSwitch.isChecked()){
+                tts.speech("text mode");
                 Toast.makeText(getApplicationContext(),
                     "text detection mode", Toast.LENGTH_LONG).show();
                 cameraSource.setFrameProcessor(new TextRecognitionProcessor(graphicOverlay, workflowModel));
             } else {
+                tts.speech("object mode");
                 Toast.makeText(getApplicationContext(),
                         "object detection mode", Toast.LENGTH_LONG).show();
                 cameraSource.setFrameProcessor(PreferenceUtils.isMultipleObjectsMode(this)

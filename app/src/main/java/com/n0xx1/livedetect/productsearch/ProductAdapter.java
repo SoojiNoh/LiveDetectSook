@@ -1,5 +1,6 @@
 package com.n0xx1.livedetect.productsearch;
 
+import android.app.Activity;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,19 +14,22 @@ import androidx.recyclerview.widget.RecyclerView.Adapter;
 
 import com.n0xx1.livedetect.R;
 import com.n0xx1.livedetect.productsearch.ProductAdapter.ProductViewHolder;
+import com.n0xx1.livedetect.text2speech.Text2Speech;
 
 import java.util.List;
 
 /** Presents the list of product items from cloud product search. */
-public class ProductAdapter extends Adapter<ProductViewHolder> {
+public class ProductAdapter extends Adapter<ProductViewHolder>{
+
+    private Text2Speech tts;
 
     static class ProductViewHolder extends RecyclerView.ViewHolder {
 
-        static ProductViewHolder create(ViewGroup parent) {
-            View view =
-                    LayoutInflater.from(parent.getContext()).inflate(R.layout.product_item, parent, false);
-            return new ProductViewHolder(view);
-        }
+//        static ProductViewHolder create(ViewGroup parent) {
+//            View view =
+//                    LayoutInflater.from(parent.getContext()).inflate(R.layout.product_item, parent, false);
+//            return new ProductViewHolder(view);
+//        }
 
         private final ImageView imageView;
         private final TextView titleView;
@@ -61,7 +65,22 @@ public class ProductAdapter extends Adapter<ProductViewHolder> {
     @Override
     @NonNull
     public ProductViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return ProductViewHolder.create(parent);
+        View view =
+                LayoutInflater.from(parent.getContext()).inflate(R.layout.product_item, parent, false);
+        ProductViewHolder holder= new ProductViewHolder(view);
+
+
+        tts = new Text2Speech(parent.getContext(), (Activity) parent.getContext());
+
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                tts.speech(productList.get(holder.getAdapterPosition()).title);
+            }
+        });
+
+//        return ProductViewHolder.create(parent);
+        return holder;
     }
 
     @Override
