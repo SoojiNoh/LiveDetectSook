@@ -25,7 +25,9 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import com.n0xx1.livedetect.barcode.BarcodeField;
 import com.n0xx1.livedetect.barcode.BarcodeProcessor;
+import com.n0xx1.livedetect.barcode.BarcodeResultFragment;
 import com.n0xx1.livedetect.camera.CameraSource;
 import com.n0xx1.livedetect.camera.CameraSourcePreview;
 import com.n0xx1.livedetect.camera.GraphicOverlay;
@@ -44,6 +46,7 @@ import com.n0xx1.livedetect.text2speech.Text2Speech;
 import com.n0xx1.livedetect.textdetection.TextRecognitionProcessor;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -122,7 +125,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setUpWorkflowModel();
 
 
-        Log.d(TAG, "************onCREATE");
     }
 
     @Override
@@ -136,7 +138,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         setObjectMode();
         workflowModel.setWorkflowState(WorkflowState.DETECTING);
-        Log.d(TAG, "************onRESUME");
+
     }
 
     @Override
@@ -144,7 +146,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onPause();
         currentWorkflowState = WorkflowState.NOT_STARTED;
         stopCameraPreview();
-        Log.d(TAG, "************onPAUSE");
     }
 
     @Override
@@ -199,24 +200,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 setObjectMode();
             } else {
                 textButton.setSelected(true);
+                barcodeButton.setSelected(false);
                 setProcessor(TEXT_MODE);
                 tts.speech("text mode");
                 Toast.makeText(getApplicationContext(),
                         "text detection mode", Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.barcode_button) {
-            if (barcodeButton.isSelected()) {
+            if (barcodeButton.isSelected() && !textButton.isSelected()) {
                 barcodeButton.setSelected(false);
                 setObjectMode();
             } else {
                 barcodeButton.setSelected(true);
+                textButton.setSelected(false);
                 setProcessor(BARCODE_MODE);
                 tts.speech("barcode mode");
                 Toast.makeText(getApplicationContext(),
                         "barcode detection mode", Toast.LENGTH_SHORT).show();
             }
         }
-        Log.d(TAG, "************onCLICK");
 
     }
 
@@ -350,6 +352,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                     }
                 });
+        workflowModel.detectedBarcode.observe(
+                this,
+                barcode -> {
+                    if (barcode != null) {
+                        ArrayList<BarcodeField> barcodeFieldList = new ArrayList<>();
+                        barcodeFieldList.add(new BarcodeField("Raw Value", barcode.getRawValue()));
+                        BarcodeResultFragment.show(getSupportFragmentManager(), barcodeFieldList);
+                    }
+                });
     }
 
     private void stateChangeInAutoSearchMode(WorkflowState workflowState) {
@@ -463,19 +474,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch(i) {
             case MULTI_MODE:
                 cameraSource.setFrameProcessor(new MultiObjectProcessor(graphicOverlay, workflowModel));
-                Log.d(TAG, "************MULTI");
                 break;
             case PROMI_MODE:
                 cameraSource.setFrameProcessor(new ProminentObjectProcessor(graphicOverlay, workflowModel));
-                Log.d(TAG, "************PROMI");
                 break;
             case TEXT_MODE:
                 cameraSource.setFrameProcessor(new TextRecognitionProcessor(graphicOverlay, workflowModel));
-                Log.d(TAG, "************TEXT");
                 break;
             case BARCODE_MODE:
                 cameraSource.setFrameProcessor(new BarcodeProcessor(graphicOverlay, workflowModel));
-                Log.d(TAG, "************BARCODE");
                 break;
         }
 

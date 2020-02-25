@@ -19,7 +19,6 @@ import com.n0xx1.livedetect.camera.WorkflowModel.WorkflowState;
 import com.n0xx1.livedetect.settings.PreferenceUtils;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.List;
 
 public class BarcodeProcessor extends FrameProcessorBase<List<FirebaseVisionBarcode>> {
@@ -55,6 +54,8 @@ public class BarcodeProcessor extends FrameProcessorBase<List<FirebaseVisionBarc
 
         // Picks the barcode, if exists, that covers the center of graphic overlay.
         FirebaseVisionBarcode barcodeInCenter = null;
+
+
         for (FirebaseVisionBarcode barcode : results) {
             RectF box = graphicOverlay.translateRect(barcode.getBoundingBox());
             if (box.contains(graphicOverlay.getWidth() / 2f, graphicOverlay.getHeight() / 2f)) {
@@ -89,6 +90,7 @@ public class BarcodeProcessor extends FrameProcessorBase<List<FirebaseVisionBarc
                 } else {
                     workflowModel.setWorkflowState(WorkflowState.DETECTED);
                     workflowModel.detectedBarcode.setValue(barcodeInCenter);
+
                 }
             }
         }
@@ -106,6 +108,7 @@ public class BarcodeProcessor extends FrameProcessorBase<List<FirebaseVisionBarc
                         graphicOverlay.clear();
                         workflowModel.setWorkflowState(WorkflowState.SEARCHED);
                         workflowModel.detectedBarcode.setValue(barcode);
+                        Log.d(TAG, "*******"+barcode.toString());
                     } else {
                         graphicOverlay.invalidate();
                     }
