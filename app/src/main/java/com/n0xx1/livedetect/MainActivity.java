@@ -11,7 +11,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
-import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -60,7 +59,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private GraphicOverlay graphicOverlay;
     private View settingsButton;
     private View flashButton;
-    private Switch textSwitch;
+    private View textButton;
     private View barcodeButton;
     private Chip promptChip;
     private AnimatorSet promptChipAnimator;
@@ -113,9 +112,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         flashButton.setOnClickListener(this);
         settingsButton = findViewById(R.id.settings_button);
         settingsButton.setOnClickListener(this);
-        textSwitch = findViewById(R.id.text_switch);
-        textSwitch.setOnClickListener(this);
-
+        textButton = findViewById(R.id.text_button);
+        textButton.setOnClickListener(this);
         barcodeButton = findViewById(R.id.barcode_button);
         barcodeButton.setOnClickListener(this);
 
@@ -123,6 +121,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         setUpWorkflowModel();
 
+
+        Log.d(TAG, "************onCREATE");
     }
 
     @Override
@@ -134,8 +134,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         currentWorkflowState = WorkflowState.NOT_STARTED;
 
-        setDetectMode();
+        setObjectMode();
         workflowModel.setWorkflowState(WorkflowState.DETECTING);
+        Log.d(TAG, "************onRESUME");
     }
 
     @Override
@@ -143,6 +144,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onPause();
         currentWorkflowState = WorkflowState.NOT_STARTED;
         stopCameraPreview();
+        Log.d(TAG, "************onPAUSE");
     }
 
     @Override
@@ -191,13 +193,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             settingsButton.setEnabled(false);
             startActivity(new Intent(this, SettingsActivity.class));
 
-        } else if (id == R.id.text_switch) {
-            setDetectMode();
+        } else if (id == R.id.text_button) {
+            if (textButton.isSelected()) {
+                textButton.setSelected(false);
+                setObjectMode();
+            } else {
+                textButton.setSelected(true);
+                setProcessor(TEXT_MODE);
+                tts.speech("text mode");
+                Toast.makeText(getApplicationContext(),
+                        "text detection mode", Toast.LENGTH_SHORT).show();
+            }
         } else if (id == R.id.barcode_button) {
-            setDetectMode();
+            if (barcodeButton.isSelected()) {
+                barcodeButton.setSelected(false);
+                setObjectMode();
+            } else {
+                barcodeButton.setSelected(true);
+                setProcessor(BARCODE_MODE);
+                tts.speech("barcode mode");
+                Toast.makeText(getApplicationContext(),
+                        "barcode detection mode", Toast.LENGTH_SHORT).show();
+            }
         }
+        Log.d(TAG, "************onCLICK");
 
-        barcodeButton.setSelected(false);
     }
 
 
@@ -428,50 +448,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void setDetectMode(){
-        if (barcodeButton.isSelected()){
+    private void setObjectMode(){
+            if (PreferenceUtils.isMultipleObjectsMode(this))
+                setProcessor(MULTI_MODE);
+            else
+                setProcessor(PROMI_MODE);
 
-            barcodeButton.setSelected(false);
-
-            if (textSwitch.isChecked()) {
-                tts.speech("text mode");
-                Toast.makeText(getApplicationContext(),
-                        "text detection mode", Toast.LENGTH_LONG).show();
-                setProcessor(TEXT_MODE);
-            }
-            else {
-                tts.speech("object mode");
-                Toast.makeText(getApplicationContext(),
-                        "object detection mode", Toast.LENGTH_LONG).show();
-                if (PreferenceUtils.isMultipleObjectsMode(this))
-                    setProcessor(MULTI_MODE);
-                else
-                    setProcessor(PROMI_MODE);
-            }
-
-
-        }else {
-            barcodeButton.setSelected(true);
-            tts.speech("barcode mode");
+            tts.speech("object mode");
             Toast.makeText(getApplicationContext(),
-                    "barcode detection mode", Toast.LENGTH_LONG).show();
-            setProcessor(BARCODE_MODE);
-        }
+                    "object detection mode", Toast.LENGTH_SHORT).show();
     }
 
     private void setProcessor(int i){
         switch(i) {
             case MULTI_MODE:
                 cameraSource.setFrameProcessor(new MultiObjectProcessor(graphicOverlay, workflowModel));
+                Log.d(TAG, "************MULTI");
                 break;
             case PROMI_MODE:
                 cameraSource.setFrameProcessor(new ProminentObjectProcessor(graphicOverlay, workflowModel));
+                Log.d(TAG, "************PROMI");
                 break;
             case TEXT_MODE:
                 cameraSource.setFrameProcessor(new TextRecognitionProcessor(graphicOverlay, workflowModel));
+                Log.d(TAG, "************TEXT");
                 break;
             case BARCODE_MODE:
                 cameraSource.setFrameProcessor(new BarcodeProcessor(graphicOverlay, workflowModel));
+                Log.d(TAG, "************BARCODE");
                 break;
         }
 

@@ -37,13 +37,14 @@
         app:srcCompat="@drawable/camera_flash"/>
 
 
-    <Switch
-        android:id="@+id/text_switch"
+    <ImageView
+        android:id="@+id/text_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_toStartOf="@id/flash_button"
         android:padding="@dimen/top_action_button_padding"
         android:contentDescription="@string/cd_text_toggle"
+        app:srcCompat="@drawable/text_toggle"
         />
 
 
@@ -51,7 +52,7 @@
         android:id="@+id/barcode_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_toStartOf="@id/text_switch"
+        android:layout_toStartOf="@id/text_button"
         android:padding="@dimen/top_action_button_padding"
         android:contentDescription="@string/cd_flash_button"
         app:srcCompat="@drawable/barcode_toggle"/>
