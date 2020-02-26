@@ -25,6 +25,7 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import com.google.firebase.ml.vision.text.FirebaseVisionText;
 import com.n0xx1.livedetect.barcode.BarcodeField;
 import com.n0xx1.livedetect.barcode.BarcodeProcessor;
 import com.n0xx1.livedetect.barcode.BarcodeResultFragment;
@@ -43,7 +44,9 @@ import com.n0xx1.livedetect.productsearch.SearchedObject;
 import com.n0xx1.livedetect.settings.PreferenceUtils;
 import com.n0xx1.livedetect.settings.SettingsActivity;
 import com.n0xx1.livedetect.text2speech.Text2Speech;
+import com.n0xx1.livedetect.textdetection.TextField;
 import com.n0xx1.livedetect.textdetection.TextRecognitionProcessor;
+import com.n0xx1.livedetect.textdetection.TextResultFragment;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -361,6 +364,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         BarcodeResultFragment.show(getSupportFragmentManager(), barcodeFieldList);
                     }
                 });
+
+        workflowModel.detectedText.observe(
+                this,
+                textBlocks -> {
+                    if (textBlocks != null) {
+                        ArrayList<TextField> textFieldList = new ArrayList<>();
+                        String text;
+                        for (int i = 0; i < textBlocks.size(); i++) {
+                            List<FirebaseVisionText.Line> lines = textBlocks.get(i).getLines();
+                            for (int j = 0; j < lines.size(); j++) {
+                                List<FirebaseVisionText.Element> elements = lines.get(j).getElements();
+                                for (int k = 0; k < elements.size(); k++) {
+                                    text = elements.get(k).getText();
+                                    textFieldList.add(new TextField("Raw Value", text));
+                                }
+                            }
+                        }
+                        TextResultFragment.show(getSupportFragmentManager(), textFieldList);
+                        for (TextField textField : textFieldList){
+                            tts.speech(textField.toString());
+                        }
+                    }
+                }
+                );
     }
 
     private void stateChangeInAutoSearchMode(WorkflowState workflowState) {
@@ -479,7 +506,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 cameraSource.setFrameProcessor(new ProminentObjectProcessor(graphicOverlay, workflowModel));
                 break;
             case TEXT_MODE:
-                cameraSource.setFrameProcessor(new TextRecognitionProcessor(graphicOverlay, workflowModel));
+                cameraSource.setFrameProcessor(new TextRecognitionProcessor(graphicOverlay, workflowModel, getApplicationContext()));
                 break;
             case BARCODE_MODE:
                 cameraSource.setFrameProcessor(new BarcodeProcessor(graphicOverlay, workflowModel));

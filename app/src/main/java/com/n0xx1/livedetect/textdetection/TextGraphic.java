@@ -12,7 +12,7 @@ import com.n0xx1.livedetect.camera.GraphicOverlay;
  * Graphic instance for rendering TextBlock position, size, and ID within an associated graphic
  * overlay view.
  */
-public class TextGraphic extends GraphicOverlay.Graphic {
+public class TextGraphic extends GraphicOverlay.Graphic{
 
     private static final int TEXT_COLOR = Color.WHITE;
     private static final float TEXT_SIZE = 54.0f;
@@ -22,6 +22,7 @@ public class TextGraphic extends GraphicOverlay.Graphic {
     private final Paint textPaint;
     private final RectF rect;
     private final FirebaseVisionText.Element text;
+
 
     TextGraphic(GraphicOverlay overlay, FirebaseVisionText.Element text) {
         super(overlay);
@@ -58,6 +59,8 @@ public class TextGraphic extends GraphicOverlay.Graphic {
         canvas.drawRect(rect, rectPaint);
 
         // Renders the text at the bottom of the box.
-        canvas.drawText(text.getText(), rect.left, rect.bottom, textPaint);
+
+//        canvas.drawText(text.getText(), rect.left, rect.bottom, textPaint);
     }
+
 }

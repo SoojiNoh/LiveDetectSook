@@ -13,12 +13,13 @@ import java.util.Locale;
 public class Text2Speech implements TextToSpeech.OnInitListener{
 
     TextToSpeech tts;
+    Context context;
 
     public Text2Speech(Context context, Activity activity) {
 
-
+        this.context = context;
         tts = new TextToSpeech(context, this);
-
+        tts.setLanguage(Locale.US);
 //        if (Build.VERSION.SDK_INT>=Build.VERSION_CODES.LOLLIPOP) {
 //            ttsGreater21(text);
 //        } else {
