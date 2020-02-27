@@ -16,7 +16,7 @@ import com.n0xx1.livedetect.R;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-public class BottomSheetScrimView extends View {
+public class BottomSheetScrimView extends View implements View.OnClickListener{
 
     private static final float DOWN_PERCENT_TO_HIDE_THUMBNAIL = 0.42f;
 
@@ -134,5 +134,11 @@ public class BottomSheetScrimView extends View {
             boxPaint.setAlpha(alpha);
             canvas.drawRoundRect(thumbnailRect, boxCornerRadius, boxCornerRadius, boxPaint);
         }
+    }
+
+
+    @Override
+    public void onClick(View v) {
+
     }
 }

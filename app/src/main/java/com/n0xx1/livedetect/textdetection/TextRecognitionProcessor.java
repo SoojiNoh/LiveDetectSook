@@ -17,28 +17,32 @@ import com.n0xx1.livedetect.camera.FrameProcessorBase;
 import com.n0xx1.livedetect.camera.GraphicOverlay;
 import com.n0xx1.livedetect.camera.GraphicOverlay.Graphic;
 import com.n0xx1.livedetect.camera.WorkflowModel;
-import com.n0xx1.livedetect.camera.WorkflowModel.WorkflowState;
+import com.n0xx1.livedetect.staticdetection.StaticDetection;
 
 import java.io.IOException;
 import java.util.List;
 
 public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionText> implements View.OnClickListener{
 
-    private static final String TAG = "TextRecogniProcessor";
+    private static final String TAG = "TextRecognizeProcessor";
 
     private final FirebaseVisionTextRecognizer detector;
     private final WorkflowModel workflowModel;
     private final Context context;
+    private final GraphicOverlay graphicOverlay;
+    private FirebaseVisionImage image;
+
 //    private final TextConfirmationController confirmationController;
 //    private final CameraReticleAnimator cameraReticleAnimator;
 //    private final int reticleOuterRingRadius;
 
     List<FirebaseVisionText.TextBlock> blocks;
+    String text;
 
     public TextRecognitionProcessor(GraphicOverlay graphicOverlay, WorkflowModel workflowModel, Context context) {
         this.workflowModel = workflowModel;
         this.context = context;
-
+        this.graphicOverlay = graphicOverlay;
 //        confirmationController = new ObjectConfirmationController(graphicOverlay);
 //        cameraReticleAnimator = new CameraReticleAnimator(graphicOverlay);
 //        reticleOuterRingRadius =
@@ -72,6 +76,7 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
 
     @Override
     protected Task<FirebaseVisionText> detectInImage(FirebaseVisionImage image) {
+        this.image = image;
         return detector.processImage(image);
     }
 
@@ -113,11 +118,14 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
 
     @Override
     public void onClick(View v) {
-        Toast.makeText(context, "textBlock is Empty", Toast.LENGTH_SHORT);
 
-        if(!blocks.isEmpty()){
-            workflowModel.setWorkflowState(WorkflowState.DETECTED);
-            workflowModel.detectedText.setValue(blocks);
-        }
+        StaticDetection staticDetection = new StaticDetection(image.getBitmap(), context, workflowModel, graphicOverlay);
+
+        Toast.makeText(context, "Text Detecting", Toast.LENGTH_SHORT);
+
+
     }
+
+
+
 }

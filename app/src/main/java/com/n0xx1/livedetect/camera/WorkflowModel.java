@@ -43,7 +43,7 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
     public final MutableLiveData<SearchedObject> searchedObject = new MutableLiveData<>();
 
     public final MutableLiveData<FirebaseVisionBarcode> detectedBarcode = new MutableLiveData<>();
-    public final MutableLiveData<List<FirebaseVisionText.TextBlock>> detectedText = new MutableLiveData<>();
+    public final MutableLiveData<String> detectedText = new MutableLiveData<>();
 
     private final Set<Integer> objectIdsToSearch = new HashSet<>();
 

@@ -108,7 +108,7 @@ public class BarcodeProcessor extends FrameProcessorBase<List<FirebaseVisionBarc
                         graphicOverlay.clear();
                         workflowModel.setWorkflowState(WorkflowState.SEARCHED);
                         workflowModel.detectedBarcode.setValue(barcode);
-                        Log.d(TAG, "*******"+barcode.toString());
+                        Log.d(TAG, "*******"+barcode.getRawValue());
                     } else {
                         graphicOverlay.invalidate();
                     }

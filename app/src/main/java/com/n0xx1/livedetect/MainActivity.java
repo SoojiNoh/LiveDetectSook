@@ -25,7 +25,6 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
-import com.google.firebase.ml.vision.text.FirebaseVisionText;
 import com.n0xx1.livedetect.barcode.BarcodeField;
 import com.n0xx1.livedetect.barcode.BarcodeProcessor;
 import com.n0xx1.livedetect.barcode.BarcodeResultFragment;
@@ -223,6 +222,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
 
+
+            Log.d(TAG, "######pressed: "+ view.getClass());
     }
 
 
@@ -370,17 +371,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 textBlocks -> {
                     if (textBlocks != null) {
                         ArrayList<TextField> textFieldList = new ArrayList<>();
-                        String text;
-                        for (int i = 0; i < textBlocks.size(); i++) {
-                            List<FirebaseVisionText.Line> lines = textBlocks.get(i).getLines();
-                            for (int j = 0; j < lines.size(); j++) {
-                                List<FirebaseVisionText.Element> elements = lines.get(j).getElements();
-                                for (int k = 0; k < elements.size(); k++) {
-                                    text = elements.get(k).getText();
-                                    textFieldList.add(new TextField("Raw Value", text));
-                                }
-                            }
-                        }
+//                        String text;
+//                        for (int i = 0; i < textBlocks.size(); i++) {
+//                            List<FirebaseVisionText.Line> lines = textBlocks.get(i).getLines();
+//                            for (int j = 0; j < lines.size(); j++) {
+//                                List<FirebaseVisionText.Element> elements = lines.get(j).getElements();
+//                                for (int k = 0; k < elements.size(); k++) {
+//                                    text = elements.get(k).getText();
+                                    textFieldList.add(new TextField("Raw Value", textBlocks));
+//                                }
+//                            }
+//                        }
                         TextResultFragment.show(getSupportFragmentManager(), textFieldList);
                         for (TextField textField : textFieldList){
                             tts.speech(textField.toString());

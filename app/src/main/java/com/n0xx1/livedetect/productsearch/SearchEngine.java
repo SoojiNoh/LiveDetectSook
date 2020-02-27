@@ -43,8 +43,6 @@ public class SearchEngine {
 
 
     private static final String CLOUD_VISION_API_KEY = BuildConfig.apikey;
-//    private static final String CLOUD_VISION_API_KEY = "AIzaSyA798GIEtoRBkoNioZBhPe0DV5MZHccb10";
-
 
     private static final String ANDROID_CERT_HEADER = "X-Android-Cert";
     private static final String ANDROID_PACKAGE_HEADER = "X-Android-Package";
