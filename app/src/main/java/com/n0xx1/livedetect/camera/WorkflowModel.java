@@ -9,7 +9,6 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.MutableLiveData;
 
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcode;
-import com.google.firebase.ml.vision.text.FirebaseVisionText;
 import com.n0xx1.livedetect.objectdetection.DetectedObject;
 import com.n0xx1.livedetect.productsearch.Product;
 import com.n0xx1.livedetect.productsearch.SearchEngine.SearchResultListener;
@@ -43,6 +42,8 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
     public final MutableLiveData<SearchedObject> searchedObject = new MutableLiveData<>();
 
     public final MutableLiveData<FirebaseVisionBarcode> detectedBarcode = new MutableLiveData<>();
+
+    public final MutableLiveData<String> detectedHtml = new MutableLiveData<>();
     public final MutableLiveData<String> detectedText = new MutableLiveData<>();
 
     private final Set<Integer> objectIdsToSearch = new HashSet<>();

@@ -36,6 +36,7 @@ import com.n0xx1.livedetect.camera.WorkflowModel.WorkflowState;
 import com.n0xx1.livedetect.objectdetection.MultiObjectProcessor;
 import com.n0xx1.livedetect.objectdetection.ProminentObjectProcessor;
 import com.n0xx1.livedetect.productsearch.BottomSheetScrimView;
+import com.n0xx1.livedetect.productsearch.ProductEngine;
 import com.n0xx1.livedetect.productsearch.Product;
 import com.n0xx1.livedetect.productsearch.ProductAdapter;
 import com.n0xx1.livedetect.productsearch.SearchEngine;
@@ -73,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ProgressBar searchProgressBar;
     private WorkflowModel workflowModel;
     private WorkflowState currentWorkflowState;
+    private ProductEngine productEngine;
     private SearchEngine searchEngine;
     private Text2Speech tts;
 
@@ -89,6 +91,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        productEngine = new ProductEngine(getApplicationContext(), this);
         searchEngine = new SearchEngine(getApplicationContext(), this);
 
         setContentView(R.layout.activity_live_object);
@@ -356,12 +359,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                     }
                 });
-        workflowModel.detectedBarcode.observe(
+//        workflowModel.detectedBarcode.observe(
+//                this,
+//                barcode -> {
+//                    if (barcode != null) {
+//                        ArrayList<BarcodeField> barcodeFieldList = new ArrayList<>();
+//                        barcodeFieldList.add(new BarcodeField("Raw Value", barcode.getRawValue()));
+//                        BarcodeResultFragment.show(getSupportFragmentManager(), barcodeFieldList);
+//                    }
+//                });
+
+        workflowModel.detectedHtml.observe(
                 this,
-                barcode -> {
-                    if (barcode != null) {
+                html -> {
+                    if (html != null) {
                         ArrayList<BarcodeField> barcodeFieldList = new ArrayList<>();
-                        barcodeFieldList.add(new BarcodeField("Raw Value", barcode.getRawValue()));
+                        barcodeFieldList.add(new BarcodeField("Result", html));
                         BarcodeResultFragment.show(getSupportFragmentManager(), barcodeFieldList);
                     }
                 });
