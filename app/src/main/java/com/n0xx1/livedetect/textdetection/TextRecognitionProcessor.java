@@ -43,10 +43,10 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
     String text;
 
     public TextRecognitionProcessor(GraphicOverlay graphicOverlay, WorkflowModel workflowModel, Context context) {
+
         this.workflowModel = workflowModel;
         this.context = context;
         this.graphicOverlay = graphicOverlay;
-//        confirmationController = new StaticConfirmationController(graphicOverlay);
         cameraReticleAnimator = new CameraReticleAnimator(graphicOverlay);
         reticleOuterRingRadius =
                 graphicOverlay
@@ -64,6 +64,7 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
 
         this.detector = FirebaseVision.getInstance().getOnDeviceTextRecognizer();
 
+        this.staticConfirmationController = new StaticConfirmationController(graphicOverlay, workflowModel, context);
     }
 
 

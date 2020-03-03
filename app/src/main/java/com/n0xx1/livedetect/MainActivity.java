@@ -10,7 +10,6 @@ import android.hardware.Camera;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -31,6 +30,7 @@ import com.n0xx1.livedetect.barcode.BarcodeProcessor;
 import com.n0xx1.livedetect.barcode.BarcodeResultFragment;
 import com.n0xx1.livedetect.camera.CameraSource;
 import com.n0xx1.livedetect.camera.CameraSourcePreview;
+import com.n0xx1.livedetect.camera.FrameProcessor;
 import com.n0xx1.livedetect.camera.GraphicOverlay;
 import com.n0xx1.livedetect.camera.WorkflowModel;
 import com.n0xx1.livedetect.camera.WorkflowModel.WorkflowState;
@@ -60,10 +60,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final int TEXT_MODE = 2;
     private static final int BARCODE_MODE = 3;
 
+    private FrameProcessor frameProcessor;
     private CameraSource cameraSource;
     private CameraSourcePreview preview;
     private GraphicOverlay graphicOverlay;
-    private View container;
     private View settingsButton;
     private View flashButton;
     private View textButton;
@@ -83,10 +83,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private RecyclerView productRecyclerView;
     private TextView bottomSheetTitleView;
     private Bitmap objectThumbnailForBottomSheet;
-    private Bitmap objectThumbnailForScrimView;
     private boolean slidingSheetUpFromHiddenState;
-    private ImageView expandedImageView;
-
 
 
 
@@ -97,8 +94,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         searchEngine = new SearchEngine(getApplicationContext(), this);
 
         setContentView(R.layout.activity_live_object);
-
-
         preview = findViewById(R.id.camera_preview);
         graphicOverlay = findViewById(R.id.camera_preview_graphic_overlay);
         graphicOverlay.setOnClickListener(this);
@@ -130,9 +125,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         barcodeButton.setOnClickListener(this);
 
         tts = new Text2Speech(getApplicationContext(), this);
-
-        expandedImageView = findViewById(R.id.expanded_image);
-        Log.d(TAG, "******expandedImageView: "+expandedImageView);
 
         setUpWorkflowModel();
 
@@ -187,8 +179,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             workflowModel.onSearchButtonClicked();
 
         } else if (id == R.id.bottom_sheet_scrim_view) {
-//            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-            bottomSheetScrimView.zoomImageFromThumb(expandedImageView, objectThumbnailForScrimView);
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
         } else if (id == R.id.close_button) {
             onBackPressed();
@@ -232,6 +223,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         "barcode detection mode", Toast.LENGTH_SHORT).show();
             }
         }
+
+
+        Log.d(TAG, "######pressed: "+ view.getClass());
     }
 
 
@@ -344,10 +338,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         // Observes changes on the object to search, if happens, fire product search request.
         workflowModel.objectToSearch.observe(
-                this, object -> {
-                    objectThumbnailForScrimView = object.getBitmap();
-                    searchEngine.search(this, object, workflowModel);
-                });
+                this, object -> searchEngine.search(this, object, workflowModel));
 
         // Observes changes on the object that has search completed, if happens, show the bottom sheet
         // to present search result.
@@ -367,15 +358,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                     }
                 });
-        workflowModel.detectedBarcode.observe(
-                this,
-                barcode -> {
-                    if (barcode != null) {
-                        ArrayList<BarcodeField> barcodeFieldList = new ArrayList<>();
-                        barcodeFieldList.add(new BarcodeField("Raw Value", barcode.getRawValue()));
-                        BarcodeResultFragment.show(getSupportFragmentManager(), barcodeFieldList);
-                    }
-                });
+//        workflowModel.detectedBarcode.observe(
+//                this,
+//                barcode -> {
+//                    if (barcode != null) {
+//                        ArrayList<BarcodeField> barcodeFieldList = new ArrayList<>();
+//                        barcodeFieldList.add(new BarcodeField("Raw Value", barcode.getRawValue()));
+//                        BarcodeResultFragment.show(getSupportFragmentManager(), barcodeFieldList);
+//                    }
+//                });
 
         workflowModel.detectedHtml.observe(
                 this,
@@ -399,7 +390,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //                                List<FirebaseVisionText.Element> elements = lines.get(j).getElements();
 //                                for (int k = 0; k < elements.size(); k++) {
 //                                    text = elements.get(k).getText();
-                                    textFieldList.add(new TextField("Raw Value", textBlocks));
+                        textFieldList.add(new TextField("Raw Value", textBlocks));
 //                                }
 //                            }
 //                        }
@@ -409,7 +400,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         }
                     }
                 }
-                );
+        );
     }
 
     private void stateChangeInAutoSearchMode(WorkflowState workflowState) {
@@ -509,31 +500,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void setObjectMode(){
-            if (PreferenceUtils.isMultipleObjectsMode(this))
-                setProcessor(MULTI_MODE);
-            else
-                setProcessor(PROMI_MODE);
+        if (PreferenceUtils.isMultipleObjectsMode(this))
+            setProcessor(MULTI_MODE);
+        else
+            setProcessor(PROMI_MODE);
 
-            tts.speech("object mode");
-            Toast.makeText(getApplicationContext(),
-                    "object detection mode", Toast.LENGTH_SHORT).show();
+        tts.speech("object mode");
+        Toast.makeText(getApplicationContext(),
+                "object detection mode", Toast.LENGTH_SHORT).show();
     }
 
     private void setProcessor(int i){
+
         switch(i) {
             case MULTI_MODE:
-                cameraSource.setFrameProcessor(new MultiObjectProcessor(graphicOverlay, workflowModel));
+                frameProcessor = new MultiObjectProcessor(graphicOverlay, workflowModel);
                 break;
             case PROMI_MODE:
-                cameraSource.setFrameProcessor(new ProminentObjectProcessor(graphicOverlay, workflowModel));
+                frameProcessor = new ProminentObjectProcessor(graphicOverlay, workflowModel);
                 break;
             case TEXT_MODE:
-                cameraSource.setFrameProcessor(new TextRecognitionProcessor(graphicOverlay, workflowModel, getApplicationContext()));
+                frameProcessor = new TextRecognitionProcessor(graphicOverlay, workflowModel, getApplicationContext());
                 break;
             case BARCODE_MODE:
-                cameraSource.setFrameProcessor(new BarcodeProcessor(graphicOverlay, workflowModel));
+                frameProcessor = new BarcodeProcessor(graphicOverlay, workflowModel);
                 break;
         }
+
+        cameraSource.setFrameProcessor(frameProcessor);
 
     }
 }
