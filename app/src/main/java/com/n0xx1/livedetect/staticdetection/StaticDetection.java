@@ -1,7 +1,6 @@
 package com.n0xx1.livedetect.staticdetection;
 
 import android.animation.ValueAnimator;
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -41,6 +40,8 @@ import java.util.Locale;
 
 public class StaticDetection {
 
+    private static final String TAG = "StaticDetection";
+
     private static final int MAX_DIMENSION = 1200;
     private static final int MAX_LABEL_RESULTS = 10;
 
@@ -53,14 +54,20 @@ public class StaticDetection {
     private final Context context;
     private final WorkflowModel workflowModel;
     private final GraphicOverlay graphicOverlay;
+    private Bitmap image;
 
-    private static final String TAG = "StaticDetection";
-
-    public StaticDetection(Bitmap image, Context context, WorkflowModel workflowModel, GraphicOverlay graphicOverlay) {
+    public StaticDetection(Context context, WorkflowModel workflowModel, GraphicOverlay graphicOverlay) {
 
         this.context = context;
         this.workflowModel = workflowModel;
         this.graphicOverlay = graphicOverlay;
+
+        Log.d(TAG, "******3.GraphicOverlay: "+graphicOverlay);
+    }
+
+    public synchronized void detect(Bitmap image){
+
+        this.image = image;
 
         if (image != null) {
             // scale the image to save on bandwidth
@@ -74,12 +81,12 @@ public class StaticDetection {
             Toast.makeText(context, "Image picker gave us a null image.", Toast.LENGTH_SHORT).show();
         }
 
-        ValueAnimator loadingAnimator = createLoadingAnimator(graphicOverlay, image);
+        ValueAnimator loadingAnimator = createLoadingAnimator();
         loadingAnimator.start();
         graphicOverlay.add(new StaticLoadingGraphic(graphicOverlay, loadingAnimator));
         workflowModel.setWorkflowState(WorkflowState.SEARCHING);
 
-
+        callCloudVision(image);
     }
 
     private Bitmap scaleBitmapDown(Bitmap bitmap, int maxDimension) {
@@ -306,8 +313,7 @@ public class StaticDetection {
 
 
 
-    private ValueAnimator createLoadingAnimator(
-            GraphicOverlay graphicOverlay, Bitmap image) {
+    private ValueAnimator createLoadingAnimator() {
         float endProgress = 1.1f;
         ValueAnimator loadingAnimator = ValueAnimator.ofFloat(0f, endProgress);
         loadingAnimator.setDuration(2000);
@@ -315,11 +321,6 @@ public class StaticDetection {
                 animation -> {
                     if (Float.compare((float) loadingAnimator.getAnimatedValue(), endProgress) >= 0) {
                         graphicOverlay.clear();
-
-                        callCloudVision(image);
-
-//                        workflowModel.detectedText.setValue(blocks);
-//                        Log.d(TAG, "*******"+barcode.toString());
                     } else {
                         graphicOverlay.invalidate();
                     }

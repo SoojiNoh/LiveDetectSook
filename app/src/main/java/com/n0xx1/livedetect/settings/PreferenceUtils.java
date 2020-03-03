@@ -95,6 +95,10 @@ public class PreferenceUtils {
         }
     }
 
+    public static int getStaticConfirmationTimeMs(Context context) {
+            return 1000;
+    }
+
     private static boolean getBooleanPref(
             Context context, @StringRes int prefKeyId, boolean defaultValue) {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);

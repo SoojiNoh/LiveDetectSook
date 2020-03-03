@@ -2,8 +2,6 @@ package com.n0xx1.livedetect.textdetection;
 
 import android.content.Context;
 import android.util.Log;
-import android.view.View;
-import android.widget.Toast;
 
 import androidx.annotation.MainThread;
 import androidx.annotation.NonNull;
@@ -11,18 +9,22 @@ import androidx.annotation.NonNull;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.ml.vision.FirebaseVision;
 import com.google.firebase.ml.vision.common.FirebaseVisionImage;
+import com.google.firebase.ml.vision.objects.FirebaseVisionObjectDetectorOptions;
 import com.google.firebase.ml.vision.text.FirebaseVisionText;
 import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
+import com.n0xx1.livedetect.R;
+import com.n0xx1.livedetect.camera.CameraReticleAnimator;
 import com.n0xx1.livedetect.camera.FrameProcessorBase;
 import com.n0xx1.livedetect.camera.GraphicOverlay;
 import com.n0xx1.livedetect.camera.GraphicOverlay.Graphic;
 import com.n0xx1.livedetect.camera.WorkflowModel;
-import com.n0xx1.livedetect.staticdetection.StaticDetection;
+import com.n0xx1.livedetect.settings.PreferenceUtils;
+import com.n0xx1.livedetect.staticdetection.StaticConfirmationController;
 
 import java.io.IOException;
 import java.util.List;
 
-public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionText> implements View.OnClickListener{
+public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionText>{
 
     private static final String TAG = "TextRecognizeProcessor";
 
@@ -31,10 +33,11 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
     private final Context context;
     private final GraphicOverlay graphicOverlay;
     private FirebaseVisionImage image;
+    private StaticConfirmationController staticConfirmationController;
 
-//    private final TextConfirmationController confirmationController;
-//    private final CameraReticleAnimator cameraReticleAnimator;
-//    private final int reticleOuterRingRadius;
+//    private final StaticConfirmationController confirmationController;
+    private final CameraReticleAnimator cameraReticleAnimator;
+    private final int reticleOuterRingRadius;
 
     List<FirebaseVisionText.TextBlock> blocks;
     String text;
@@ -43,25 +46,24 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
         this.workflowModel = workflowModel;
         this.context = context;
         this.graphicOverlay = graphicOverlay;
-//        confirmationController = new ObjectConfirmationController(graphicOverlay);
-//        cameraReticleAnimator = new CameraReticleAnimator(graphicOverlay);
-//        reticleOuterRingRadius =
-//                graphicOverlay
-//                        .getResources()
-//                        .getDimensionPixelOffset(R.dimen.object_reticle_outer_ring_stroke_radius);
+//        confirmationController = new StaticConfirmationController(graphicOverlay);
+        cameraReticleAnimator = new CameraReticleAnimator(graphicOverlay);
+        reticleOuterRingRadius =
+                graphicOverlay
+                        .getResources()
+                        .getDimensionPixelOffset(R.dimen.object_reticle_outer_ring_stroke_radius);
 
-//        FirebaseVisionObjectDetectorOptions.Builder optionsBuilder =
-//                new FirebaseVisionObjectDetectorOptions.Builder()
-//                        .setDetectorMode(FirebaseVisionObjectDetectorOptions.STREAM_MODE);
-//        if (PreferenceUtils.isClassificationEnabled(graphicOverlay.getContext())) {
-//            optionsBuilder.enableClassification();
-//        }
+        FirebaseVisionObjectDetectorOptions.Builder optionsBuilder =
+                new FirebaseVisionObjectDetectorOptions.Builder()
+                        .setDetectorMode(FirebaseVisionObjectDetectorOptions.STREAM_MODE);
+        if (PreferenceUtils.isClassificationEnabled(graphicOverlay.getContext())) {
+            optionsBuilder.enableClassification();
+        }
 
-//        confirmationController = new TextConfirmationController(graphicOverlay);
-
-        graphicOverlay.setOnClickListener(this);
+//        graphicOverlay.setOnClickListener(this);
 
         this.detector = FirebaseVision.getInstance().getOnDeviceTextRecognizer();
+
     }
 
 
@@ -76,7 +78,9 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
 
     @Override
     protected Task<FirebaseVisionText> detectInImage(FirebaseVisionImage image) {
+        Log.d(TAG, "******Image: "+image);
         this.image = image;
+        staticConfirmationController.setImage(image.getBitmap());
         return detector.processImage(image);
     }
 
@@ -116,16 +120,12 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
     }
 
 
-    @Override
-    public void onClick(View v) {
 
-        StaticDetection staticDetection = new StaticDetection(image.getBitmap(), context, workflowModel, graphicOverlay);
-
-        Toast.makeText(context, "Text Detecting", Toast.LENGTH_SHORT);
-
-
-    }
-
-
-
+//    @Override
+//    public void onClick(View v) {
+////        StaticDetection staticDetection = new StaticDetection(context, workflowModel, graphicOverlay);
+////        staticDetection.detect(image.getBitmap());
+//        Log.d(TAG, "******TextRecognition");
+//        Toast.makeText(context, "Text Detecting", Toast.LENGTH_SHORT);
+//    }
 }

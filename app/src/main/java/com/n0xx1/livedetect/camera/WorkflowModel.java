@@ -2,6 +2,7 @@ package com.n0xx1.livedetect.camera;
 
 import android.app.Application;
 import android.content.Context;
+import android.graphics.Bitmap;
 
 import androidx.annotation.MainThread;
 import androidx.annotation.Nullable;
@@ -45,6 +46,8 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
 
     public final MutableLiveData<String> detectedHtml = new MutableLiveData<>();
     public final MutableLiveData<String> detectedText = new MutableLiveData<>();
+
+    public final MutableLiveData<Bitmap> detectedImage = new MutableLiveData<>();
 
     private final Set<Integer> objectIdsToSearch = new HashSet<>();
 
