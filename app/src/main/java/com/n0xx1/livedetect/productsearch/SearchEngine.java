@@ -232,7 +232,7 @@ public class SearchEngine {
 
 
                 List<EntityAnnotation> labels = result.getResponses().get(0).getLabelAnnotations();
-                List<EntityAnnotation> texts = result.getResponses().get(0).getTextAnnotations();
+//                List<EntityAnnotation> texts = result.getResponses().get(0).getTextAnnotations();
 
 
                 if (!labels.isEmpty()) {
@@ -246,10 +246,7 @@ public class SearchEngine {
                 } else {
 
                     Log.d(TAG, "no search result");
-//                    for (int i = 0; i < 8; i++) {
-//                        productList.add(
-//                                new Product(/* imageUrl= */ "", "Product title " + i, "Product subtitle " + i));
-//                    }
+
                 }
 
 

@@ -3,18 +3,23 @@ package com.n0xx1.livedetect.camera;
 import android.app.Application;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.util.Log;
 
 import androidx.annotation.MainThread;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.MutableLiveData;
 
+import com.google.api.services.vision.v1.model.EntityAnnotation;
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcode;
 import com.n0xx1.livedetect.objectdetection.DetectedObject;
 import com.n0xx1.livedetect.productsearch.Product;
 import com.n0xx1.livedetect.productsearch.SearchEngine.SearchResultListener;
+import com.n0xx1.livedetect.staticdetection.StaticEngine.StaticResultListener;
 import com.n0xx1.livedetect.productsearch.SearchedObject;
 import com.n0xx1.livedetect.settings.PreferenceUtils;
+import com.n0xx1.livedetect.staticdetection.Text;
+import com.n0xx1.livedetect.staticdetection.TextedObject;
 
 import java.util.HashSet;
 import java.util.List;
@@ -23,7 +28,7 @@ import java.util.Set;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /** View model for handling application workflow based on camera preview. */
-public class WorkflowModel extends AndroidViewModel implements SearchResultListener {
+public class WorkflowModel extends AndroidViewModel implements SearchResultListener, StaticResultListener {
 
     /**
      * State set of the application workflow.
@@ -35,17 +40,21 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
         CONFIRMING,
         CONFIRMED,
         SEARCHING,
-        SEARCHED
+        SEARCHED,
+        ZOOMED
     }
 
     public final MutableLiveData<WorkflowState> workflowState = new MutableLiveData<>();
     public final MutableLiveData<DetectedObject> objectToSearch = new MutableLiveData<>();
     public final MutableLiveData<SearchedObject> searchedObject = new MutableLiveData<>();
 
+    public final MutableLiveData<TextedObject> textedObject = new MutableLiveData<>();
+
     public final MutableLiveData<FirebaseVisionBarcode> detectedBarcode = new MutableLiveData<>();
 
     public final MutableLiveData<String> detectedHtml = new MutableLiveData<>();
     public final MutableLiveData<String> detectedText = new MutableLiveData<>();
+
 
     public final MutableLiveData<Bitmap> detectedImage = new MutableLiveData<>();
 
@@ -131,6 +140,18 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
         searchedObject.setValue(
                 new SearchedObject(getContext().getResources(), confirmedObject, products));
     }
+
+
+    @Override
+    public void onStaticCompleted(List<Text> texts) {
+        setWorkflowState(WorkflowState.SEARCHED);
+        textedObject.setValue(
+                new TextedObject(getContext().getResources(), texts)
+        );
+
+    }
+
+
 
     private Context getContext() {
         return getApplication().getApplicationContext();

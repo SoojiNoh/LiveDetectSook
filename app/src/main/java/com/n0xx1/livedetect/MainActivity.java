@@ -45,10 +45,10 @@ import com.n0xx1.livedetect.productsearch.SearchedObject;
 import com.n0xx1.livedetect.settings.PreferenceUtils;
 import com.n0xx1.livedetect.settings.SettingsActivity;
 import com.n0xx1.livedetect.staticdetection.StaticConfirmationController;
+import com.n0xx1.livedetect.staticdetection.Text;
+import com.n0xx1.livedetect.staticdetection.TextAdapter;
 import com.n0xx1.livedetect.text2speech.Text2Speech;
-import com.n0xx1.livedetect.textdetection.TextField;
 import com.n0xx1.livedetect.textdetection.TextRecognitionProcessor;
-import com.n0xx1.livedetect.textdetection.TextResultFragment;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -391,27 +391,47 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 });
 
-        workflowModel.detectedText.observe(
-                this,
-                textBlocks -> {
-                    if (textBlocks != null) {
-                        ArrayList<TextField> textFieldList = new ArrayList<>();
-//                        String text;
-//                        for (int i = 0; i < textBlocks.size(); i++) {
-//                            List<FirebaseVisionText.Line> lines = textBlocks.get(i).getLines();
-//                            for (int j = 0; j < lines.size(); j++) {
-//                                List<FirebaseVisionText.Element> elements = lines.get(j).getElements();
-//                                for (int k = 0; k < elements.size(); k++) {
-//                                    text = elements.get(k).getText();
-                        textFieldList.add(new TextField("Raw Value", textBlocks));
-//                                }
-//                            }
+//        workflowModel.detectedText.observe(
+//                this,
+//                textBlocks -> {
+//                    if (textBlocks != null) {
+//                        bottomSheetScrimView.setVisibility(View.VISIBLE);
+//                        ArrayList<TextField> textFieldList = new ArrayList<>();
+////                        String text;
+////                        for (int i = 0; i < textBlocks.size(); i++) {
+////                            List<FirebaseVisionText.Line> lines = textBlocks.get(i).getLines();
+////                            for (int j = 0; j < lines.size(); j++) {
+////                                List<FirebaseVisionText.Element> elements = lines.get(j).getElements();
+////                                for (int k = 0; k < elements.size(); k++) {
+////                                    text = elements.get(k).getText();
+//                        textFieldList.add(new TextField("Result", textBlocks));
+////                                }
+////                            }
+////                        }
+//                        TextResultFragment.show(getSupportFragmentManager(), textFieldList);
+//                        for (TextField textField : textFieldList){
+//                            tts.speech(textField.toString());
 //                        }
-                        TextResultFragment.show(getSupportFragmentManager(), textFieldList);
-                        for (TextField textField : textFieldList){
-                            tts.speech(textField.toString());
-                        }
+//                    }
+//                }
+//        );
+
+        workflowModel.textedObject.observe(
+                this,
+                textedObject -> {
+                    if (textedObject != null) {
+                        List<Text> textList = textedObject.getTextList();
+                        objectThumbnailForBottomSheet = staticConfirmationController.getImage();
+                        bottomSheetTitleView.setText(
+                                getResources()
+                                        .getQuantityString(
+                                                R.plurals.bottom_sheet_title, textList.size(), textList.size()));
+                        productRecyclerView.setAdapter(new TextAdapter(textList));
+                        slidingSheetUpFromHiddenState = true;
+                        bottomSheetBehavior.setPeekHeight(preview.getHeight() / 2);
+                        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                     }
+
                 }
         );
     }

@@ -14,7 +14,6 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
@@ -177,6 +176,8 @@ public class BottomSheetScrimView extends View{
         // Load the high-resolution "zoomed-in" image.
         final ImageView expandedImageView = imageView;
         expandedImageView.setImageBitmap(image);
+
+        expandedImageView.setBackgroundColor(Color.BLACK);
 
         // Calculate the starting and ending bounds for the zoomed-in image.
         // This step involves lots of math. Yay, math.

@@ -20,6 +20,7 @@ import com.google.api.services.vision.v1.Vision;
 import com.google.api.services.vision.v1.VisionRequest;
 import com.google.api.services.vision.v1.VisionRequestInitializer;
 import com.google.api.services.vision.v1.model.AnnotateImageRequest;
+import com.google.api.services.vision.v1.model.AnnotateImageResponse;
 import com.google.api.services.vision.v1.model.BatchAnnotateImagesRequest;
 import com.google.api.services.vision.v1.model.BatchAnnotateImagesResponse;
 import com.google.api.services.vision.v1.model.EntityAnnotation;
@@ -38,9 +39,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class StaticDetection {
+public class StaticEngine {
 
-    private static final String TAG = "StaticDetection";
+    private static final String TAG = "StaticEngine";
 
     private static final int MAX_DIMENSION = 1200;
     private static final int MAX_LABEL_RESULTS = 10;
@@ -51,22 +52,28 @@ public class StaticDetection {
     private static final String ANDROID_CERT_HEADER = "X-Android-Cert";
     private static final String ANDROID_PACKAGE_HEADER = "X-Android-Package";
 
-    private final Context context;
+    public interface StaticResultListener {
+        void onStaticCompleted(List<Text> textList);
+    }
+
+    private final Context mContext;
+    private StaticResultListener mListener;
     private final WorkflowModel workflowModel;
     private final GraphicOverlay graphicOverlay;
     private Bitmap image;
 
-    public StaticDetection(Context context, WorkflowModel workflowModel, GraphicOverlay graphicOverlay) {
+    public StaticEngine(Context mContext, WorkflowModel workflowModel, GraphicOverlay graphicOverlay) {
 
-        this.context = context;
+        this.mContext = mContext;
         this.workflowModel = workflowModel;
         this.graphicOverlay = graphicOverlay;
 
     }
 
-    public synchronized void detect(Bitmap image){
-
+    public synchronized void detect(Bitmap image, StaticResultListener listener){
+        
         this.image = image;
+        this.mListener = listener;
 
         if (image != null) {
             // scale the image to save on bandwidth
@@ -77,7 +84,7 @@ public class StaticDetection {
 
         } else {
             Log.d(TAG, "Image picker gave us a null image.");
-            Toast.makeText(context, "Image picker gave us a null image.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(mContext, "Image picker gave us a null image.", Toast.LENGTH_SHORT).show();
         }
 
         ValueAnimator loadingAnimator = createLoadingAnimator();
@@ -86,6 +93,10 @@ public class StaticDetection {
         workflowModel.setWorkflowState(WorkflowState.SEARCHING);
 
         callCloudVision(image);
+    }
+
+    public Bitmap getImage(){
+        return image;
     }
 
     private Bitmap scaleBitmapDown(Bitmap bitmap, int maxDimension) {
@@ -115,7 +126,7 @@ public class StaticDetection {
 
         // Do the real work in an async task, because we need to use the network anyway
         try {
-            AsyncTask<Object, Void, String> DetectionTask = new DetectionTask(prepareAnnotationRequest(bitmap), bitmap);
+            AsyncTask<Object, Void, AnnotateImageResponse> DetectionTask = new DetectionTask(prepareAnnotationRequest(bitmap), bitmap);
             DetectionTask.execute();
         } catch (IOException e) {
             Log.d(TAG, "failed to make API request because of other IOException " +
@@ -123,7 +134,7 @@ public class StaticDetection {
         }
     }
 
-    private class DetectionTask extends AsyncTask<Object, Void, String> {
+    private class DetectionTask extends AsyncTask<Object, Void, AnnotateImageResponse> {
         private Vision.Images.Annotate mRequest;
         private Bitmap mBitmap;
         private List<EntityAnnotation> labels;
@@ -135,15 +146,17 @@ public class StaticDetection {
         }
 
         @Override
-        protected String doInBackground(Object... params) {
+        protected AnnotateImageResponse doInBackground(Object... params) {
             try {
                 Log.d(TAG, "created Cloud Vision request object, sending request");
                 BatchAnnotateImagesResponse response = mRequest.execute();
 
-                labels = response.getResponses().get(0).getLabelAnnotations();
-                texts = response.getResponses().get(0).getTextAnnotations();
+//                labels = response.getResponses().get(0).getLabelAnnotations();
+//                texts = response.getResponses().get(0).getTextAnnotations();
 
-                return convertResponseToString(labels, texts);
+//                return convertResponseToString(labels, texts);
+
+                return response.getResponses().get(0);
 
             } catch (GoogleJsonResponseException e) {
                 Log.d(TAG, "failed to make API request because " + e.getContent());
@@ -151,23 +164,31 @@ public class StaticDetection {
                 Log.d(TAG, "failed to make API request because of other IOException " +
                         e.getMessage());
             }
-            return "Cloud Vision API request failed. Check logs for details.";
+//            return "Cloud Vision API request failed. Check logs for details.";
+              return new AnnotateImageResponse();
         }
 
-        protected void onPostExecute(String result) {
-//            Activity activity = (Activity) context;
+        protected void onPostExecute(AnnotateImageResponse result) {
 
-//            if (activity != null && !activity.isFinishing()) {
-                workflowModel.setWorkflowState(WorkflowState.DETECTED);
-                workflowModel.detectedText.setValue(result);
-//                TextView imageDetail = activity.findViewById(R.id.image_details);
-//                imageDetail.setText(result);
-//
-//                ImageView imageView = activity.findViewById(R.id.main_image);
-//                imageView.setImageDrawable(new BitmapDrawable(textRect(texts, mBitmap)));
-//                int res = getResources().getIdentifier("green", "drawable", activity.getPackageName());
-//                imageView.setImageResource(res);
-//            }
+            List<EntityAnnotation> texts = result.getTextAnnotations();
+
+            List<Text> textList = new ArrayList<>();
+
+            if (texts!= null && !texts.isEmpty()) {
+                for (int i = 0; i < texts.size(); i++) {
+
+                    EntityAnnotation text = texts.get(i);
+                    textList.add(
+                            new Text(/* imageUrl= */ null, text.getDescription(), (ArrayList)text.getBoundingPoly().getVertices()));
+                }
+
+            } else {
+
+                Log.d(TAG, "no search result");
+
+            }
+            mListener.onStaticCompleted(textList);
+//                workflowModel.detectedText.setValue(result);
         }
     }
 
@@ -187,10 +208,10 @@ public class StaticDetection {
                             throws IOException {
                         super.initializeVisionRequest(visionRequest);
 
-                        String packageName = context.getPackageName();
+                        String packageName = mContext.getPackageName();
                         visionRequest.getRequestHeaders().set(ANDROID_PACKAGE_HEADER, packageName);
 
-                        String sig = PackageManagerUtils.getSignature(context.getPackageManager(), packageName);
+                        String sig = PackageManagerUtils.getSignature(mContext.getPackageManager(), packageName);
 
                         visionRequest.getRequestHeaders().set(ANDROID_CERT_HEADER, sig);
                     }

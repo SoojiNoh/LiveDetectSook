@@ -1,6 +1,5 @@
 package com.n0xx1.livedetect.textdetection;
 
-import android.content.Context;
 import android.util.Log;
 
 import androidx.annotation.MainThread;
@@ -58,11 +57,7 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
             optionsBuilder.enableClassification();
         }
 
-//        graphicOverlay.setOnClickListener(this);
-
         this.detector = FirebaseVision.getInstance().getOnDeviceTextRecognizer();
-
-//        this.staticConfirmationController = new StaticConfirmationController(graphicOverlay, workflowModel, context);
     }
 
     public void setStaticConfirmationController(StaticConfirmationController staticConfirmationController){
