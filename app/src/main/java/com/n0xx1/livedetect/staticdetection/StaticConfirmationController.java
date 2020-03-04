@@ -3,7 +3,6 @@ package com.n0xx1.livedetect.staticdetection;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.os.CountDownTimer;
-import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.Nullable;
@@ -50,8 +49,6 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
         this.graphicOverlay = graphicOverlay;
         this.context = context;
 
-        this.graphicOverlay.setOnTouchListener(this);
-
         cameraReticleAnimator = new CameraReticleAnimator(graphicOverlay);
         reticleOuterRingRadius =
                 graphicOverlay
@@ -62,6 +59,15 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
 
         confirmationTimeMs = PreferenceUtils.getStaticConfirmationTimeMs(graphicOverlay.getContext());
     }
+
+    public void activate(){
+        this.graphicOverlay.setOnTouchListener(this);
+    }
+
+    public void disactivate(){
+        this.graphicOverlay.setOnTouchListener(null);
+    }
+
 
     void confirming() {
         if (confirming) {

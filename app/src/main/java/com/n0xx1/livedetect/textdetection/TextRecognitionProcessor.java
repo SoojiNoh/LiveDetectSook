@@ -30,7 +30,6 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
 
     private final FirebaseVisionTextRecognizer detector;
     private final WorkflowModel workflowModel;
-    private final Context context;
     private final GraphicOverlay graphicOverlay;
     private FirebaseVisionImage image;
     private StaticConfirmationController staticConfirmationController;
@@ -42,10 +41,9 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
     List<FirebaseVisionText.TextBlock> blocks;
     String text;
 
-    public TextRecognitionProcessor(GraphicOverlay graphicOverlay, WorkflowModel workflowModel, Context context) {
+    public TextRecognitionProcessor(GraphicOverlay graphicOverlay, WorkflowModel workflowModel) {
 
         this.workflowModel = workflowModel;
-        this.context = context;
         this.graphicOverlay = graphicOverlay;
         cameraReticleAnimator = new CameraReticleAnimator(graphicOverlay);
         reticleOuterRingRadius =
@@ -64,9 +62,12 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
 
         this.detector = FirebaseVision.getInstance().getOnDeviceTextRecognizer();
 
-        this.staticConfirmationController = new StaticConfirmationController(graphicOverlay, workflowModel, context);
+//        this.staticConfirmationController = new StaticConfirmationController(graphicOverlay, workflowModel, context);
     }
 
+    public void setStaticConfirmationController(StaticConfirmationController staticConfirmationController){
+        this.staticConfirmationController = staticConfirmationController;
+    }
 
     @Override
     public void stop() {

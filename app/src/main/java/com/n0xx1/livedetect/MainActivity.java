@@ -43,6 +43,7 @@ import com.n0xx1.livedetect.productsearch.SearchEngine;
 import com.n0xx1.livedetect.productsearch.SearchedObject;
 import com.n0xx1.livedetect.settings.PreferenceUtils;
 import com.n0xx1.livedetect.settings.SettingsActivity;
+import com.n0xx1.livedetect.staticdetection.StaticConfirmationController;
 import com.n0xx1.livedetect.text2speech.Text2Speech;
 import com.n0xx1.livedetect.textdetection.TextField;
 import com.n0xx1.livedetect.textdetection.TextRecognitionProcessor;
@@ -59,6 +60,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final int PROMI_MODE= 1;
     private static final int TEXT_MODE = 2;
     private static final int BARCODE_MODE = 3;
+
+    private MultiObjectProcessor multiObjectProcessor;
+    private ProminentObjectProcessor prominentObjectProcessor;
+    private TextRecognitionProcessor textRecognitionProcessor;
+    private BarcodeProcessor barcodeProcessor;
+    private StaticConfirmationController staticConfirmationController;
 
     private FrameProcessor frameProcessor;
     private CameraSource cameraSource;
@@ -126,7 +133,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         tts = new Text2Speech(getApplicationContext(), this);
 
+
         setUpWorkflowModel();
+        
+        staticConfirmationController = new StaticConfirmationController(graphicOverlay, workflowModel, getApplicationContext());
+
+        multiObjectProcessor = new MultiObjectProcessor(graphicOverlay, workflowModel);
+        prominentObjectProcessor = new ProminentObjectProcessor(graphicOverlay, workflowModel);
+        textRecognitionProcessor = new TextRecognitionProcessor(graphicOverlay, workflowModel);
+        textRecognitionProcessor.setStaticConfirmationController(staticConfirmationController);
+        barcodeProcessor = new BarcodeProcessor(graphicOverlay, workflowModel);
+
+
 
 
     }
@@ -512,18 +530,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void setProcessor(int i){
 
+        if(frameProcessor!=null && frameProcessor.getClass().getSimpleName().equals("TextRecognitionProcessor")){
+            staticConfirmationController.disactivate();
+        }
+
         switch(i) {
             case MULTI_MODE:
-                frameProcessor = new MultiObjectProcessor(graphicOverlay, workflowModel);
+                frameProcessor = multiObjectProcessor;
                 break;
             case PROMI_MODE:
-                frameProcessor = new ProminentObjectProcessor(graphicOverlay, workflowModel);
+                frameProcessor = prominentObjectProcessor;
                 break;
             case TEXT_MODE:
-                frameProcessor = new TextRecognitionProcessor(graphicOverlay, workflowModel, getApplicationContext());
+                staticConfirmationController.activate();
+                frameProcessor = textRecognitionProcessor;
                 break;
             case BARCODE_MODE:
-                frameProcessor = new BarcodeProcessor(graphicOverlay, workflowModel);
+                frameProcessor = barcodeProcessor;
                 break;
         }
 

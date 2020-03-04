@@ -62,7 +62,6 @@ public class StaticDetection {
         this.workflowModel = workflowModel;
         this.graphicOverlay = graphicOverlay;
 
-        Log.d(TAG, "******3.GraphicOverlay: "+graphicOverlay);
     }
 
     public synchronized void detect(Bitmap image){
