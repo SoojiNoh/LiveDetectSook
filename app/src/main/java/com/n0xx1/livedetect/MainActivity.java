@@ -10,6 +10,7 @@ import android.hardware.Camera;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -90,6 +91,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private RecyclerView productRecyclerView;
     private TextView bottomSheetTitleView;
     private Bitmap objectThumbnailForBottomSheet;
+    private Bitmap objectThumbnailForScrimView;
+    private ImageView expandedImageView;
     private boolean slidingSheetUpFromHiddenState;
 
 
@@ -98,13 +101,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        searchEngine = new SearchEngine(getApplicationContext(), this);
-
         setContentView(R.layout.activity_live_object);
+
         preview = findViewById(R.id.camera_preview);
         graphicOverlay = findViewById(R.id.camera_preview_graphic_overlay);
         graphicOverlay.setOnClickListener(this);
         cameraSource = new CameraSource(graphicOverlay);
+
+        expandedImageView = findViewById(R.id.expanded_image);
 
         promptChip = findViewById(R.id.bottom_prompt_chip);
         promptChipAnimator =
@@ -132,7 +136,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         barcodeButton.setOnClickListener(this);
 
         tts = new Text2Speech(getApplicationContext(), this);
-
+        searchEngine = new SearchEngine(getApplicationContext(), this);
 
         setUpWorkflowModel();
         
@@ -197,8 +201,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             workflowModel.onSearchButtonClicked();
 
         } else if (id == R.id.bottom_sheet_scrim_view) {
-            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-
+//            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+            bottomSheetScrimView.zoomImageFromThumb(expandedImageView, objectThumbnailForScrimView);
         } else if (id == R.id.close_button) {
             onBackPressed();
 
@@ -356,7 +360,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         // Observes changes on the object to search, if happens, fire product search request.
         workflowModel.objectToSearch.observe(
-                this, object -> searchEngine.search(this, object, workflowModel));
+                this, object -> {
+                    objectThumbnailForScrimView = object.getBitmap();
+                    searchEngine.search(this, object, workflowModel);
+                });
 
         // Observes changes on the object that has search completed, if happens, show the bottom sheet
         // to present search result.
@@ -376,15 +383,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                     }
                 });
-//        workflowModel.detectedBarcode.observe(
-//                this,
-//                barcode -> {
-//                    if (barcode != null) {
-//                        ArrayList<BarcodeField> barcodeFieldList = new ArrayList<>();
-//                        barcodeFieldList.add(new BarcodeField("Raw Value", barcode.getRawValue()));
-//                        BarcodeResultFragment.show(getSupportFragmentManager(), barcodeFieldList);
-//                    }
-//                });
 
         workflowModel.detectedHtml.observe(
                 this,
