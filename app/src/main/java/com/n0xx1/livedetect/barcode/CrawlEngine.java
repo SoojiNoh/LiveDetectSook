@@ -64,14 +64,9 @@ public class CrawlEngine {
 
         private void crawl(){
             try {
-                Log.d(TAG, "******htmlPageUrl: "+htmlPageUrl);
                 Document doc = Jsoup.connect(htmlPageUrl).get();
                 name = doc.select("div[class=productTit]");
                 content = doc.select("dd[class=productDetail]");
-
-
-                Log.d(TAG, "******name: "+name.text());
-                Log.d(TAG, "******content: "+content.text());
 
 
                 String name_string = "";
@@ -91,7 +86,6 @@ public class CrawlEngine {
                 htmlContentInStringFormat = "";
 //                Log.i("logcat","zz"+name.text().trim()+"zz");
                 if (name_string.equals("")){
-                    Log.d(TAG, "******can't find the product");
                     htmlContentInStringFormat="본 상품의 정보를 찾을 수 없습니다. 죄송합니다.";
                 } else {
                     htmlContentInStringFormat+="본 상품의 이름은 " + (name_string.trim()) + "입니다.";

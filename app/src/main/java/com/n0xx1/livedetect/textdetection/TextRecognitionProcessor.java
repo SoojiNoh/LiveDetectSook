@@ -80,7 +80,6 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
 
     @Override
     protected Task<FirebaseVisionText> detectInImage(FirebaseVisionImage image) {
-        Log.d(TAG, "******Image: "+image);
         this.image = image;
         staticConfirmationController.setImage(image.getBitmap());
         return detector.processImage(image);
@@ -122,12 +121,4 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
     }
 
 
-
-//    @Override
-//    public void onClick(View v) {
-////        StaticDetection staticDetection = new StaticDetection(context, workflowModel, graphicOverlay);
-////        staticDetection.detect(image.getBitmap());
-//        Log.d(TAG, "******TextRecognition");
-//        Toast.makeText(context, "Text Detecting", Toast.LENGTH_SHORT);
-//    }
 }

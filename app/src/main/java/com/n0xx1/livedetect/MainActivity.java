@@ -245,9 +245,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         "barcode detection mode", Toast.LENGTH_SHORT).show();
             }
         }
-
-
-        Log.d(TAG, "######pressed: "+ view.getClass());
     }
 
 
