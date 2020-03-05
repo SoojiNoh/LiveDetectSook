@@ -45,6 +45,7 @@ import com.n0xx1.livedetect.productsearch.SearchedObject;
 import com.n0xx1.livedetect.settings.PreferenceUtils;
 import com.n0xx1.livedetect.settings.SettingsActivity;
 import com.n0xx1.livedetect.staticdetection.StaticConfirmationController;
+import com.n0xx1.livedetect.staticdetection.StaticEngine;
 import com.n0xx1.livedetect.staticdetection.Text;
 import com.n0xx1.livedetect.staticdetection.TextAdapter;
 import com.n0xx1.livedetect.text2speech.Text2Speech;
@@ -67,6 +68,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TextRecognitionProcessor textRecognitionProcessor;
     private BarcodeProcessor barcodeProcessor;
     private StaticConfirmationController staticConfirmationController;
+    private StaticEngine staticEngine;
 
     private FrameProcessor frameProcessor;
     private CameraSource cameraSource;
@@ -91,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private RecyclerView productRecyclerView;
     private TextView bottomSheetTitleView;
     private Bitmap objectThumbnailForBottomSheet;
-    private Bitmap objectThumbnailForScrimView;
+    private Bitmap objectThumbnailForZoomView;
     private ImageView expandedImageView;
     private boolean slidingSheetUpFromHiddenState;
 
@@ -139,7 +141,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         searchEngine = new SearchEngine(getApplicationContext(), this);
 
         setUpWorkflowModel();
-        
+
         staticConfirmationController = new StaticConfirmationController(graphicOverlay, workflowModel, getApplicationContext());
 
         multiObjectProcessor = new MultiObjectProcessor(graphicOverlay, workflowModel);
@@ -202,7 +204,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         } else if (id == R.id.bottom_sheet_scrim_view) {
 //            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-            bottomSheetScrimView.zoomImageFromThumb(expandedImageView, objectThumbnailForScrimView);
+            bottomSheetScrimView.zoomImageFromThumb(expandedImageView, objectThumbnailForZoomView);
         } else if (id == R.id.close_button) {
             onBackPressed();
 
@@ -280,6 +282,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         Log.d(TAG, "Bottom sheet new state: " + newState);
                         bottomSheetScrimView.setVisibility(
                                 newState == BottomSheetBehavior.STATE_HIDDEN ? View.GONE : View.VISIBLE);
+                        Log.d(TAG, "*******bottomViewVisibility: "+bottomSheetScrimView.getVisibility());
                         graphicOverlay.clear();
 
                         switch (newState) {
@@ -358,7 +361,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // Observes changes on the object to search, if happens, fire product search request.
         workflowModel.objectToSearch.observe(
                 this, object -> {
-                    objectThumbnailForScrimView = object.getBitmap();
+                    objectThumbnailForZoomView = object.getBitmap();
                     searchEngine.search(this, object, workflowModel);
                 });
 
@@ -416,12 +419,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //                }
 //        );
 
+        // Observes changes on the object to search, if happens, fire product search request.
+        workflowModel.textToDetect.observe(
+                this, textBimap -> {
+                    staticEngine = new StaticEngine(getApplicationContext(), workflowModel, graphicOverlay);
+                    staticEngine.detect(textBimap, workflowModel);
+//                    objectThumbnailForZoomView = textBimap;
+                });
+
         workflowModel.textedObject.observe(
                 this,
                 textedObject -> {
                     if (textedObject != null) {
                         List<Text> textList = textedObject.getTextList();
-                        objectThumbnailForBottomSheet = staticConfirmationController.getImage();
+                        objectThumbnailForBottomSheet = textedObject.getTextThumbnail();
+                        objectThumbnailForZoomView = textedObject.getTextRectBitmap();
                         bottomSheetTitleView.setText(
                                 getResources()
                                         .getQuantityString(

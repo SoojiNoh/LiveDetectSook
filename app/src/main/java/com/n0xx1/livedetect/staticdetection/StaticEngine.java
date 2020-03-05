@@ -53,7 +53,7 @@ public class StaticEngine {
     private static final String ANDROID_PACKAGE_HEADER = "X-Android-Package";
 
     public interface StaticResultListener {
-        void onStaticCompleted(List<Text> textList);
+        void onStaticCompleted(List<Text> textList, Bitmap image, Bitmap image_rect);
     }
 
     private final Context mContext;
@@ -70,8 +70,8 @@ public class StaticEngine {
 
     }
 
-    public synchronized void detect(Bitmap image, StaticResultListener listener){
-        
+    public void detect(Bitmap image, StaticResultListener listener){
+
         this.image = image;
         this.mListener = listener;
 
@@ -187,8 +187,11 @@ public class StaticEngine {
                 Log.d(TAG, "no search result");
 
             }
-            mListener.onStaticCompleted(textList);
-//                workflowModel.detectedText.setValue(result);
+
+            Bitmap mBitmapRect = textRect(texts, mBitmap);
+            Log.d(TAG, "******mBitmapRect01: "+mBitmapRect);
+
+            mListener.onStaticCompleted(textList, mBitmap, mBitmapRect);
         }
     }
 

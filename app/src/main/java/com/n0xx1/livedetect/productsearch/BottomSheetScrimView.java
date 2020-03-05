@@ -14,6 +14,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
@@ -60,7 +61,6 @@ public class BottomSheetScrimView extends View{
         thumbnailMargin = resources.getDimensionPixelOffset(R.dimen.object_thumbnail_margin);
         boxCornerRadius = resources.getDimensionPixelOffset(R.dimen.bounding_box_corner_radius);
     }
-
     /**
      * Translates the object thumbnail up or down along with bottom sheet's sliding movement, with
      * keeping thumbnail size fixed.
@@ -68,7 +68,6 @@ public class BottomSheetScrimView extends View{
     public void updateWithThumbnailTranslate(
             Bitmap thumbnailBitmap, int collapsedStateHeight, float slideOffset, View bottomSheet) {
         this.thumbnailBitmap = thumbnailBitmap;
-
         float currentSheetHeight;
         if (slideOffset < 0) {
             downPercentInCollapsed = -slideOffset;

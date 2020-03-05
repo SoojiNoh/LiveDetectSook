@@ -3,21 +3,19 @@ package com.n0xx1.livedetect.camera;
 import android.app.Application;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.util.Log;
 
 import androidx.annotation.MainThread;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.MutableLiveData;
 
-import com.google.api.services.vision.v1.model.EntityAnnotation;
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcode;
 import com.n0xx1.livedetect.objectdetection.DetectedObject;
 import com.n0xx1.livedetect.productsearch.Product;
 import com.n0xx1.livedetect.productsearch.SearchEngine.SearchResultListener;
-import com.n0xx1.livedetect.staticdetection.StaticEngine.StaticResultListener;
 import com.n0xx1.livedetect.productsearch.SearchedObject;
 import com.n0xx1.livedetect.settings.PreferenceUtils;
+import com.n0xx1.livedetect.staticdetection.StaticEngine.StaticResultListener;
 import com.n0xx1.livedetect.staticdetection.Text;
 import com.n0xx1.livedetect.staticdetection.TextedObject;
 
@@ -40,14 +38,15 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
         CONFIRMING,
         CONFIRMED,
         SEARCHING,
-        SEARCHED,
-        ZOOMED
+        SEARCHED
     }
 
     public final MutableLiveData<WorkflowState> workflowState = new MutableLiveData<>();
+
     public final MutableLiveData<DetectedObject> objectToSearch = new MutableLiveData<>();
     public final MutableLiveData<SearchedObject> searchedObject = new MutableLiveData<>();
 
+    public final MutableLiveData<Bitmap> textToDetect = new MutableLiveData<>();
     public final MutableLiveData<TextedObject> textedObject = new MutableLiveData<>();
 
     public final MutableLiveData<FirebaseVisionBarcode> detectedBarcode = new MutableLiveData<>();
@@ -143,10 +142,10 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
 
 
     @Override
-    public void onStaticCompleted(List<Text> texts) {
+    public void onStaticCompleted(List<Text> texts, Bitmap image, Bitmap image_rect) {
         setWorkflowState(WorkflowState.SEARCHED);
         textedObject.setValue(
-                new TextedObject(getContext().getResources(), texts)
+                new TextedObject(getContext().getResources(), texts, image, image_rect)
         );
 
     }

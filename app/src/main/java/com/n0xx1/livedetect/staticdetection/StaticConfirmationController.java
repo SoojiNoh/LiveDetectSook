@@ -19,9 +19,6 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
     private static final String TAG = "StaticConfirmation";
 
 
-    private StaticEngine staticEngine;
-
-
     @Nullable
     private boolean confirming = false;
     private boolean searching = false;
@@ -66,6 +63,11 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
 
     public void disactivate(){
         this.graphicOverlay.setOnTouchListener(null);
+    }
+
+
+    public void setImage(Bitmap image){
+        this.image = image;
     }
 
     public Bitmap getImage() {return image;}
@@ -127,18 +129,10 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
                 workflowModel.detectedImage.setValue(image);
                     if (!searching) {
                         searching = true;
-                        staticEngine = new StaticEngine(context, workflowModel, graphicOverlay);
-                        staticEngine.detect(image, workflowModel);
+                        workflowModel.setWorkflowState(WorkflowState.SEARCHING);
+                        workflowModel.textToDetect.setValue(image);
                     }
 
-//                new Thread(() -> {
-//                    if (!searching) {
-//                        searching = true;
-//                        staticEngine = new StaticEngine(context, workflowModel, graphicOverlay);
-//                        staticEngine.detect(image);
-//                        searching = false;
-//                    }
-//                }).start();
 
             }
             else
@@ -156,11 +150,6 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
         }
         graphicOverlay.invalidate();
 
-    }
-
-
-    public void setImage(Bitmap image){
-        this.image = image;
     }
 
 
