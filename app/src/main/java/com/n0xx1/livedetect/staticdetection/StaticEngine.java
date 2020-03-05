@@ -189,7 +189,6 @@ public class StaticEngine {
             }
 
             Bitmap mBitmapRect = textRect(texts, mBitmap);
-            Log.d(TAG, "******mBitmapRect01: "+mBitmapRect);
 
             mListener.onStaticCompleted(textList, mBitmap, mBitmapRect);
         }

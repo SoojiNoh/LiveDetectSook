@@ -282,7 +282,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         Log.d(TAG, "Bottom sheet new state: " + newState);
                         bottomSheetScrimView.setVisibility(
                                 newState == BottomSheetBehavior.STATE_HIDDEN ? View.GONE : View.VISIBLE);
-                        Log.d(TAG, "*******bottomViewVisibility: "+bottomSheetScrimView.getVisibility());
                         graphicOverlay.clear();
 
                         switch (newState) {
