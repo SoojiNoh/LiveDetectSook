@@ -2,6 +2,7 @@ package com.n0xx1.livedetect.staticdetection;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Rect;
 
 import androidx.annotation.Nullable;
 
@@ -37,10 +38,10 @@ public class TextedObject {
         return textList;
     }
 
-//    public Rect getBoundingBox() {
-//        return new Rect();
-//
-//    }
+    public Rect getBoundingBox() {
+        return new Rect();
+
+    }
 //
     public synchronized Bitmap getTextThumbnail(){
         if (image == null) {

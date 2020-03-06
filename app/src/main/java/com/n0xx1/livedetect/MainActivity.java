@@ -48,6 +48,7 @@ import com.n0xx1.livedetect.staticdetection.StaticConfirmationController;
 import com.n0xx1.livedetect.staticdetection.StaticEngine;
 import com.n0xx1.livedetect.staticdetection.Text;
 import com.n0xx1.livedetect.staticdetection.TextAdapter;
+import com.n0xx1.livedetect.staticdetection.TextedObject;
 import com.n0xx1.livedetect.text2speech.Text2Speech;
 import com.n0xx1.livedetect.textdetection.TextRecognitionProcessor;
 
@@ -303,22 +304,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void onSlide(@NonNull View bottomSheet, float slideOffset) {
                         SearchedObject searchedObject = workflowModel.searchedObject.getValue();
-                        if (searchedObject == null || Float.isNaN(slideOffset)) {
+                        TextedObject textedObject = workflowModel.textedObject.getValue();
+
+                        if ((searchedObject == null && textedObject == null) || Float.isNaN(slideOffset)) {
                             return;
                         }
 
                         int collapsedStateHeight =
                                 Math.min(bottomSheetBehavior.getPeekHeight(), bottomSheet.getHeight());
-                        if (slidingSheetUpFromHiddenState) {
-                            RectF thumbnailSrcRect =
-                                    graphicOverlay.translateRect(searchedObject.getBoundingBox());
-                            bottomSheetScrimView.updateWithThumbnailTranslateAndScale(
-                                    objectThumbnailForBottomSheet,
-                                    collapsedStateHeight,
-                                    slideOffset,
-                                    thumbnailSrcRect);
 
-                        } else {
+                        if(searchedObject!=null) {
+                            if (slidingSheetUpFromHiddenState) {
+                                RectF thumbnailSrcRect =
+                                        graphicOverlay.translateRect(searchedObject.getBoundingBox());
+                                bottomSheetScrimView.updateWithThumbnailTranslateAndScale(
+                                        objectThumbnailForBottomSheet,
+                                        collapsedStateHeight,
+                                        slideOffset,
+                                        thumbnailSrcRect);
+
+                            } else {
+
+                            }
+                        } else if (textedObject!=null){
                             bottomSheetScrimView.updateWithThumbnailTranslate(
                                     objectThumbnailForBottomSheet, collapsedStateHeight, slideOffset, bottomSheet);
                         }
