@@ -44,6 +44,8 @@ import com.n0xx1.livedetect.productsearch.SearchEngine;
 import com.n0xx1.livedetect.productsearch.SearchedObject;
 import com.n0xx1.livedetect.settings.PreferenceUtils;
 import com.n0xx1.livedetect.settings.SettingsActivity;
+import com.n0xx1.livedetect.staticdetection.Label;
+import com.n0xx1.livedetect.staticdetection.LabelAdapter;
 import com.n0xx1.livedetect.staticdetection.StaticConfirmationController;
 import com.n0xx1.livedetect.staticdetection.StaticEngine;
 import com.n0xx1.livedetect.staticdetection.Text;
@@ -60,9 +62,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private static final String TAG = "LiveObjectActivity";
     private static final int MULTI_MODE = 0;
-    private static final int PROMI_MODE= 1;
+    private static final int PROMI_MODE = 1;
     private static final int TEXT_MODE = 2;
-    private static final int BARCODE_MODE = 3;
+    private static final int LABEL_MODE = 3;
+    private static final int BARCODE_MODE = 4;
+    private static int CURRENT_MODE;
 
     private MultiObjectProcessor multiObjectProcessor;
     private ProminentObjectProcessor prominentObjectProcessor;
@@ -97,7 +101,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Bitmap objectThumbnailForZoomView;
     private ImageView expandedImageView;
     private boolean slidingSheetUpFromHiddenState;
-
 
 
     @Override
@@ -145,12 +148,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         staticConfirmationController = new StaticConfirmationController(graphicOverlay, workflowModel, getApplicationContext());
 
-        multiObjectProcessor = new MultiObjectProcessor(graphicOverlay, workflowModel);
-        prominentObjectProcessor = new ProminentObjectProcessor(graphicOverlay, workflowModel);
-        textRecognitionProcessor = new TextRecognitionProcessor(graphicOverlay, workflowModel);
-        textRecognitionProcessor.setStaticConfirmationController(staticConfirmationController);
-        barcodeProcessor = new BarcodeProcessor(graphicOverlay, workflowModel);
+        multiObjectProcessor = new MultiObjectProcessor(graphicOverlay, workflowModel, staticConfirmationController);
 
+        prominentObjectProcessor = new ProminentObjectProcessor(graphicOverlay, workflowModel, staticConfirmationController);
+
+        textRecognitionProcessor = new TextRecognitionProcessor(graphicOverlay, workflowModel, staticConfirmationController);
+
+        barcodeProcessor = new BarcodeProcessor(graphicOverlay, workflowModel);
 
 
 
@@ -427,10 +431,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //        );
 
         // Observes changes on the object to search, if happens, fire product search request.
-        workflowModel.textToDetect.observe(
-                this, textBimap -> {
+        workflowModel.staticToDetect.observe(
+                this, image -> {
                     staticEngine = new StaticEngine(getApplicationContext(), workflowModel, graphicOverlay);
-                    staticEngine.detect(textBimap, workflowModel);
+                    if (CURRENT_MODE == TEXT_MODE)
+                        staticEngine.detectText(image, workflowModel);
+                    else if (CURRENT_MODE == PROMI_MODE || CURRENT_MODE == MULTI_MODE)
+                        staticEngine.detectLabel(image, workflowModel);
 //                    objectThumbnailForZoomView = textBimap;
                 });
 
@@ -446,6 +453,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         .getQuantityString(
                                                 R.plurals.bottom_sheet_title, textList.size(), textList.size()));
                         productRecyclerView.setAdapter(new TextAdapter(textList));
+                        slidingSheetUpFromHiddenState = true;
+                        bottomSheetBehavior.setPeekHeight(preview.getHeight() / 2);
+                        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                    }
+
+                }
+        );
+
+        workflowModel.labeledObject.observe(
+                this,
+                labeledObject -> {
+                    if (labeledObject != null) {
+                        List<Label> labelList = labeledObject.getLabelList();
+                        objectThumbnailForBottomSheet = labeledObject.getLabelThumbnail();
+//                        objectThumbnailForZoomView = labeledObject.getLabelRectBitmap();
+                        bottomSheetTitleView.setText(
+                                getResources()
+                                        .getQuantityString(
+                                                R.plurals.bottom_sheet_title, labelList.size(), labelList.size()));
+                        productRecyclerView.setAdapter(new LabelAdapter(labelList));
                         slidingSheetUpFromHiddenState = true;
                         bottomSheetBehavior.setPeekHeight(preview.getHeight() / 2);
                         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
@@ -564,19 +591,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void setProcessor(int i){
 
-        if(frameProcessor!=null && frameProcessor.getClass().getSimpleName().equals("TextRecognitionProcessor")){
+        if(frameProcessor!=null && !(CURRENT_MODE==BARCODE_MODE)){
             staticConfirmationController.disactivate();
         }
 
+        CURRENT_MODE = i;
+
         switch(i) {
             case MULTI_MODE:
+                staticConfirmationController.activate(LABEL_MODE);
                 frameProcessor = multiObjectProcessor;
                 break;
             case PROMI_MODE:
+                staticConfirmationController.activate(LABEL_MODE);
                 frameProcessor = prominentObjectProcessor;
                 break;
             case TEXT_MODE:
-                staticConfirmationController.activate();
+                staticConfirmationController.activate(TEXT_MODE);
                 frameProcessor = textRecognitionProcessor;
                 break;
             case BARCODE_MODE:

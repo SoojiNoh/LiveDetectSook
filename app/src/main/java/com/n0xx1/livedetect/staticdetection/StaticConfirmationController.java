@@ -18,7 +18,6 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
 
     private static final String TAG = "StaticConfirmation";
 
-
     @Nullable
     private boolean confirming = false;
     private boolean searching = false;
@@ -34,6 +33,8 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
     private final GraphicOverlay graphicOverlay;
     private CountDownTimer countDownTimer;
     private long confirmationTimeMs;
+
+    private int mode;
 
 
     private Bitmap image;
@@ -57,7 +58,8 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
         confirmationTimeMs = PreferenceUtils.getStaticConfirmationTimeMs(graphicOverlay.getContext());
     }
 
-    public void activate(){
+    public void activate(int mode){
+        this.mode = mode;
         this.graphicOverlay.setOnTouchListener(this);
     }
 
@@ -130,13 +132,15 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
                     if (!searching) {
                         searching = true;
                         workflowModel.setWorkflowState(WorkflowState.SEARCHING);
-                        workflowModel.textToDetect.setValue(image);
+                        workflowModel.staticToDetect.setValue(image);
+
                     }
 
 
             }
             else
                 workflowModel.setWorkflowState(WorkflowState.CONFIRMING);
+//                workflowModel.setWorkflowState(WorkflowState.CONFIRMED);
 
         }
 

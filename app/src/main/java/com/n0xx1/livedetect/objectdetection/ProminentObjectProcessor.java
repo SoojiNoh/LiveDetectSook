@@ -18,6 +18,7 @@ import com.n0xx1.livedetect.camera.GraphicOverlay;
 import com.n0xx1.livedetect.camera.WorkflowModel;
 import com.n0xx1.livedetect.camera.WorkflowModel.WorkflowState;
 import com.n0xx1.livedetect.settings.PreferenceUtils;
+import com.n0xx1.livedetect.staticdetection.StaticConfirmationController;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,7 +35,10 @@ public class ProminentObjectProcessor extends FrameProcessorBase<List<FirebaseVi
     private final CameraReticleAnimator cameraReticleAnimator;
     private final int reticleOuterRingRadius;
 
-    public ProminentObjectProcessor(GraphicOverlay graphicOverlay, WorkflowModel workflowModel) {
+
+    private final StaticConfirmationController staticConfirmationController;
+
+    public ProminentObjectProcessor(GraphicOverlay graphicOverlay, WorkflowModel workflowModel, StaticConfirmationController staticConfirmationController) {
         this.workflowModel = workflowModel;
         confirmationController = new ObjectConfirmationController(graphicOverlay);
         cameraReticleAnimator = new CameraReticleAnimator(graphicOverlay);
@@ -50,6 +54,8 @@ public class ProminentObjectProcessor extends FrameProcessorBase<List<FirebaseVi
             optionsBuilder.enableClassification();
         }
         this.detector = FirebaseVision.getInstance().getOnDeviceObjectDetector(optionsBuilder.build());
+
+        this.staticConfirmationController = staticConfirmationController;
     }
 
     @Override
@@ -63,6 +69,7 @@ public class ProminentObjectProcessor extends FrameProcessorBase<List<FirebaseVi
 
     @Override
     protected Task<List<FirebaseVisionObject>> detectInImage(FirebaseVisionImage image) {
+        staticConfirmationController.setImage(image.getBitmap());
         return detector.processImage(image);
     }
 

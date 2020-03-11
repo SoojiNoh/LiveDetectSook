@@ -18,6 +18,7 @@ import com.n0xx1.livedetect.camera.FrameProcessorBase;
 import com.n0xx1.livedetect.camera.GraphicOverlay;
 import com.n0xx1.livedetect.camera.WorkflowModel;
 import com.n0xx1.livedetect.settings.PreferenceUtils;
+import com.n0xx1.livedetect.staticdetection.StaticConfirmationController;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,7 +38,9 @@ public class MultiObjectProcessor extends FrameProcessorBase<List<FirebaseVision
     // Each new tracked object plays appearing animation exactly once.
     private final Map<Integer, ObjectDotAnimator> objectDotAnimatorMap = new HashMap<>();
 
-    public MultiObjectProcessor(GraphicOverlay graphicOverlay, WorkflowModel workflowModel) {
+    private final StaticConfirmationController staticConfirmationController;
+
+    public MultiObjectProcessor(GraphicOverlay graphicOverlay, WorkflowModel workflowModel, StaticConfirmationController staticConfirmationController) {
         this.workflowModel = workflowModel;
         this.confirmationController = new ObjectConfirmationController(graphicOverlay);
         this.cameraReticleAnimator = new CameraReticleAnimator(graphicOverlay);
@@ -54,6 +57,8 @@ public class MultiObjectProcessor extends FrameProcessorBase<List<FirebaseVision
             optionsBuilder.enableClassification();
         }
         this.detector = FirebaseVision.getInstance().getOnDeviceObjectDetector(optionsBuilder.build());
+
+        this.staticConfirmationController = staticConfirmationController;
     }
 
     @Override
@@ -67,8 +72,10 @@ public class MultiObjectProcessor extends FrameProcessorBase<List<FirebaseVision
 
     @Override
     protected Task<List<FirebaseVisionObject>> detectInImage(FirebaseVisionImage image) {
+        staticConfirmationController.setImage(image.getBitmap());
         return detector.processImage(image);
     }
+
 
     @MainThread
     @Override

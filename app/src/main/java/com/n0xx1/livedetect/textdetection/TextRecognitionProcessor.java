@@ -40,10 +40,11 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
     List<FirebaseVisionText.TextBlock> blocks;
     String text;
 
-    public TextRecognitionProcessor(GraphicOverlay graphicOverlay, WorkflowModel workflowModel) {
+    public TextRecognitionProcessor(GraphicOverlay graphicOverlay, WorkflowModel workflowModel, StaticConfirmationController staticConfirmationController) {
 
         this.workflowModel = workflowModel;
         this.graphicOverlay = graphicOverlay;
+        this.staticConfirmationController = staticConfirmationController;
         cameraReticleAnimator = new CameraReticleAnimator(graphicOverlay);
         reticleOuterRingRadius =
                 graphicOverlay
@@ -60,9 +61,6 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
         this.detector = FirebaseVision.getInstance().getOnDeviceTextRecognizer();
     }
 
-    public void setStaticConfirmationController(StaticConfirmationController staticConfirmationController){
-        this.staticConfirmationController = staticConfirmationController;
-    }
 
     @Override
     public void stop() {
@@ -75,7 +73,7 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
 
     @Override
     protected Task<FirebaseVisionText> detectInImage(FirebaseVisionImage image) {
-        this.image = image;
+//        this.image = image;
         staticConfirmationController.setImage(image.getBitmap());
         return detector.processImage(image);
     }

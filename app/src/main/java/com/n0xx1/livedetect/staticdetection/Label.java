@@ -5,21 +5,19 @@ import android.graphics.Bitmap;
 
 import com.google.api.services.vision.v1.model.Vertex;
 import com.n0xx1.livedetect.R;
-import com.n0xx1.livedetect.Utils;
 
 import java.util.ArrayList;
 
-public class Text {
+public class Label {
     final Bitmap image;
-    final String text;
+    final String label;
     ArrayList<Vertex> vertices;
     int objectThumbnailCornerRadius;
 
-
-    Text(Resources resources, Bitmap image, String text, ArrayList<Vertex> vertices) {
+    Label(Resources resources, Bitmap image, String label, ArrayList<Vertex> vertices) {
 //        this.textThumbnail = textThumbnail;
         this.image = null;
-        this.text = text;
+        this.label = label;
         this.vertices = vertices;
         this.objectThumbnailCornerRadius =
                 resources.getDimensionPixelOffset(R.dimen.bounding_box_corner_radius);
@@ -31,6 +29,6 @@ public class Text {
 //            textThumnail =
 //                    Utils.getCornerRoundedBitmap(textThumbnail, objectThumbnailCornerRadius);
 //        }
-        return Utils.getCornerRoundedBitmap(image, objectThumbnailCornerRadius);
+        return image;
     }
 }

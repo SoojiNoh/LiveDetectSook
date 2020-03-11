@@ -15,6 +15,8 @@ import com.n0xx1.livedetect.productsearch.Product;
 import com.n0xx1.livedetect.productsearch.SearchEngine.SearchResultListener;
 import com.n0xx1.livedetect.productsearch.SearchedObject;
 import com.n0xx1.livedetect.settings.PreferenceUtils;
+import com.n0xx1.livedetect.staticdetection.Label;
+import com.n0xx1.livedetect.staticdetection.LabeledObject;
 import com.n0xx1.livedetect.staticdetection.StaticEngine.StaticResultListener;
 import com.n0xx1.livedetect.staticdetection.Text;
 import com.n0xx1.livedetect.staticdetection.TextedObject;
@@ -45,8 +47,9 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
 
     public final MutableLiveData<DetectedObject> objectToSearch = new MutableLiveData<>();
     public final MutableLiveData<SearchedObject> searchedObject = new MutableLiveData<>();
+    public final MutableLiveData<LabeledObject> labeledObject = new MutableLiveData<>();
 
-    public final MutableLiveData<Bitmap> textToDetect = new MutableLiveData<>();
+    public final MutableLiveData<Bitmap> staticToDetect = new MutableLiveData<>();
     public final MutableLiveData<TextedObject> textedObject = new MutableLiveData<>();
 
     public final MutableLiveData<FirebaseVisionBarcode> detectedBarcode = new MutableLiveData<>();
@@ -140,16 +143,23 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
                 new SearchedObject(getContext().getResources(), confirmedObject, products));
     }
 
+    @Override
+    public void onStaticLabelCompleted(List<Label> texts, Bitmap image, Bitmap image_rect) {
+        setWorkflowState(WorkflowState.SEARCHED);
+        labeledObject.setValue(
+                new LabeledObject(getContext().getResources(), texts, image, image_rect)
+        );
+
+    }
 
     @Override
-    public void onStaticCompleted(List<Text> texts, Bitmap image, Bitmap image_rect) {
+    public void onStaticTextCompleted(List<Text> texts, Bitmap image, Bitmap image_rect) {
         setWorkflowState(WorkflowState.SEARCHED);
         textedObject.setValue(
                 new TextedObject(getContext().getResources(), texts, image, image_rect)
         );
 
     }
-
 
 
     private Context getContext() {

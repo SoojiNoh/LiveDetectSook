@@ -46,6 +46,9 @@ public class StaticEngine {
     private static final int MAX_DIMENSION = 1200;
     private static final int MAX_LABEL_RESULTS = 10;
 
+    private static final int TEXT_MODE = 2;
+    private static final int LABEL_MODE = 3;
+
     private static final String CLOUD_VISION_API_KEY = BuildConfig.apikey;
 
 
@@ -53,7 +56,8 @@ public class StaticEngine {
     private static final String ANDROID_PACKAGE_HEADER = "X-Android-Package";
 
     public interface StaticResultListener {
-        void onStaticCompleted(List<Text> textList, Bitmap image, Bitmap image_rect);
+        void onStaticLabelCompleted(List<Label> labelList, Bitmap image, Bitmap image_rect);
+        void onStaticTextCompleted(List<Text> textList, Bitmap image, Bitmap image_rect);
     }
 
     private final Context mContext;
@@ -70,7 +74,11 @@ public class StaticEngine {
 
     }
 
-    public void detect(Bitmap image, StaticResultListener listener){
+    public Bitmap getImage(){
+        return image;
+    }
+
+    public void detectText(Bitmap image, StaticResultListener listener){
 
         this.image = image;
         this.mListener = listener;
@@ -92,12 +100,34 @@ public class StaticEngine {
         graphicOverlay.add(new StaticLoadingGraphic(graphicOverlay, loadingAnimator));
         workflowModel.setWorkflowState(WorkflowState.SEARCHING);
 
-        callCloudVision(image);
+        callCloudVision(image, TEXT_MODE);
     }
 
-    public Bitmap getImage(){
-        return image;
+    public void detectLabel(Bitmap image, StaticResultListener listener){
+
+        this.image = image;
+        this.mListener = listener;
+
+        if (image != null) {
+            // scale the image to save on bandwidth
+            Bitmap bitmap =
+                    scaleBitmapDown(image,MAX_DIMENSION);
+
+//                mMainImage.setImageBitmap(bitmap);
+
+        } else {
+            Log.d(TAG, "Image picker gave us a null image.");
+            Toast.makeText(mContext, "Image picker gave us a null image.", Toast.LENGTH_SHORT).show();
+        }
+
+        ValueAnimator loadingAnimator = createLoadingAnimator();
+        loadingAnimator.start();
+        graphicOverlay.add(new StaticLoadingGraphic(graphicOverlay, loadingAnimator));
+        workflowModel.setWorkflowState(WorkflowState.SEARCHING);
+
+        callCloudVision(image, LABEL_MODE);
     }
+
 
     private Bitmap scaleBitmapDown(Bitmap bitmap, int maxDimension) {
 
@@ -120,13 +150,13 @@ public class StaticEngine {
     }
 
 
-    private void callCloudVision(final Bitmap bitmap) {
+    private void callCloudVision(final Bitmap bitmap, int mode) {
         // Switch text to loading
 //        mImageDetails.setText(R.string.loading_message);
 
         // Do the real work in an async task, because we need to use the network anyway
         try {
-            AsyncTask<Object, Void, AnnotateImageResponse> DetectionTask = new DetectionTask(prepareAnnotationRequest(bitmap), bitmap);
+            AsyncTask<Object, Void, AnnotateImageResponse> DetectionTask = new DetectionTask(prepareAnnotationRequest(bitmap), bitmap, mode);
             DetectionTask.execute();
         } catch (IOException e) {
             Log.d(TAG, "failed to make API request because of other IOException " +
@@ -137,12 +167,14 @@ public class StaticEngine {
     private class DetectionTask extends AsyncTask<Object, Void, AnnotateImageResponse> {
         private Vision.Images.Annotate mRequest;
         private Bitmap mBitmap;
-        private List<EntityAnnotation> labels;
-        List<EntityAnnotation> texts;
+        int mMode;
 
-        DetectionTask(Vision.Images.Annotate annotate, Bitmap bitmap) {
+        DetectionTask(Vision.Images.Annotate annotate, Bitmap bitmap, int mode) {
             mRequest = annotate;
             mBitmap= bitmap;
+            mMode = mode;
+
+            Log.d(TAG, "***mBitmap"+mBitmap);
         }
 
         @Override
@@ -170,27 +202,50 @@ public class StaticEngine {
 
         protected void onPostExecute(AnnotateImageResponse result) {
 
-            List<EntityAnnotation> texts = result.getTextAnnotations();
 
-            List<Text> textList = new ArrayList<>();
+            if (mMode == LABEL_MODE) {
+                List<EntityAnnotation> labels = result.getLabelAnnotations();
+                List<Label> labelList = new ArrayList<>();
+                if (labels != null && !labels.isEmpty()) {
+                    for (int i = 0; i < labels.size(); i++) {
 
-            if (texts!= null && !texts.isEmpty()) {
-                for (int i = 0; i < texts.size(); i++) {
+                        EntityAnnotation label = labels.get(i);
+                        Log.d(TAG, "***mLabel"+label);
+                        labelList.add(
+//                                new Label(mContext.getResources(), image, label.getDescription(), (ArrayList) label.getBoundingPoly().getVertices()));
+                        new Label(mContext.getResources(), image, label.getDescription(), null));
+                    }
+//                    Bitmap mBitmapRect = rectBitmap(labels, mBitmap);
+                    mListener.onStaticLabelCompleted(labelList, mBitmap, null);
+                } else {
 
-                    EntityAnnotation text = texts.get(i);
-                    textList.add(
-                            new Text(/* imageUrl= */ null, text.getDescription(), (ArrayList)text.getBoundingPoly().getVertices()));
+                    Log.d(TAG, "no label search result");
+                    Toast.makeText(mContext, "no label search result", Toast.LENGTH_SHORT).show();
+
                 }
-
-            } else {
-
-                Log.d(TAG, "no search result");
-
             }
 
-            Bitmap mBitmapRect = textRect(texts, mBitmap);
 
-            mListener.onStaticCompleted(textList, mBitmap, mBitmapRect);
+            if (mMode == TEXT_MODE) {
+                List<EntityAnnotation> texts = result.getTextAnnotations();
+                List<Text> textList = new ArrayList<>();
+
+                if (texts != null && !texts.isEmpty()) {
+                    for (int i = 0; i < texts.size(); i++) {
+
+                        EntityAnnotation text = texts.get(i);
+                        textList.add(
+                                new Text(/* imageUrl= */ mContext.getResources(), image, text.getDescription(), (ArrayList) text.getBoundingPoly().getVertices()));
+                    }
+                    Bitmap mBitmapRect = rectBitmap(texts, mBitmap);
+                    mListener.onStaticTextCompleted(textList, mBitmap, mBitmapRect);
+                } else {
+
+                    Log.d(TAG, "no text search result");
+
+                }
+            }
+
         }
     }
 
@@ -249,6 +304,7 @@ public class StaticEngine {
             annotateImageRequest.setFeatures(new ArrayList<Feature>() {{
                 Feature labelDetection = new Feature();
                 labelDetection.setType("label_DETECTION");
+//                labelDetection.setType("OBJECT_LOCALIZATION");
                 labelDetection.setMaxResults(MAX_LABEL_RESULTS);
                 add(labelDetection);
 
@@ -299,7 +355,7 @@ public class StaticEngine {
         return message.toString();
     }
 
-    private static Bitmap textRect(List<EntityAnnotation> texts, Bitmap bitmap) {
+    private static Bitmap rectBitmap(List<EntityAnnotation> objects, Bitmap bitmap) {
 
         //The Color of the Rectangle to Draw on top of Text
         Paint paint = new Paint();
@@ -311,12 +367,12 @@ public class StaticEngine {
         Canvas canvas = new Canvas(tempBitmap);
         canvas.drawBitmap(bitmap, 0, 0, null);
 
-        for (EntityAnnotation text : texts) {
+        for (EntityAnnotation object : objects) {
 
             Path path = new Path();
             //                path.reset(); // only needed when reusing this path for a new build
 
-            ArrayList <Vertex> vertices = (ArrayList) text.getBoundingPoly().getVertices();
+            ArrayList <Vertex> vertices = (ArrayList) object.getBoundingPoly().getVertices();
 
             Vertex vertexFirst = vertices.get(0);
             path.moveTo(vertexFirst.getX(), vertexFirst.getY()); // used for first point
