@@ -1,8 +1,6 @@
 package com.n0xx1.livedetect.barcode;
 
 import android.os.AsyncTask;
-import android.util.Log;
-import android.widget.TextView;
 
 import com.n0xx1.livedetect.camera.WorkflowModel;
 
@@ -14,32 +12,34 @@ import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class CrawlEngine {
+public class BarcodeCrawlEngine {
 
-    private static final String TAG = "CrawlEngine";
+    private static final String TAG = "BarcodeCrawlEngine";
 
     private WorkflowModel workflowModel;
 
     private String htmlPageUrl;
-    private TextView textviewHtmlDocument;
-    private String htmlContentInStringFormat="";
-    private String barcode;
+//    private String htmlContentInStringFormat="";
 
-    public CrawlEngine(WorkflowModel workflowModel, String barcode){
+    private String barcode;
+    private String title;
+    private String description;
+    private ProductCrawlEngine productCrawlEngine;
+
+    public BarcodeCrawlEngine(WorkflowModel workflowModel, String barcode){
 
         this.workflowModel = workflowModel;
         this.barcode = barcode;
         htmlPageUrl = "http://www.koreannet.or.kr/home/hpisSrchGtin.gs1?gtin="+barcode;
-
 
         JsoupAsyncTask jsoupAsyncTask = new JsoupAsyncTask();
         jsoupAsyncTask.execute();
 
     }
 
-    public String getHtmlContent(){
-        return htmlContentInStringFormat;
-    }
+//    public String getHtmlContent(){
+//        return htmlContentInStringFormat;
+//    }
 
     private class JsoupAsyncTask extends AsyncTask<Void, Void, Void> {
 
@@ -59,7 +59,9 @@ public class CrawlEngine {
 
         @Override
         protected void onPostExecute(Void result) {
-            workflowModel.detectedHtml.setValue(htmlContentInStringFormat);
+            BarcodedObject barcodedObject = new BarcodedObject(title, barcode, description);
+            workflowModel.barcodedObject.setValue(barcodedObject);
+            ProductCrawlEngine productCrawlEngine = new ProductCrawlEngine(workflowModel, barcodedObject);
         }
 
         private void crawl(){
@@ -83,13 +85,15 @@ public class CrawlEngine {
 
 
 
-                htmlContentInStringFormat = "";
+//                htmlContentInStringFormat = "";
 //                Log.i("logcat","zz"+name.text().trim()+"zz");
                 if (name_string.equals("")){
-                    htmlContentInStringFormat="본 상품의 정보를 찾을 수 없습니다. 죄송합니다.";
+//                    htmlContentInStringFormat="본 상품의 정보를 찾을 수 없습니다. 죄송합니다.";
                 } else {
-                    htmlContentInStringFormat+="본 상품의 이름은 " + (name_string.trim()) + "입니다.";
-                    htmlContentInStringFormat+="더 자세하게 말씀드리자면 " + (content.text().trim()) + "입니다.";
+                    title = name_string.trim();
+                    description = content.text().trim();
+//                    htmlContentInStringFormat+="본 상품의 이름은 " + (name_string.trim()) + "입니다.";
+//                    htmlContentInStringFormat+="더 자세하게 말씀드리자면 " + (content.text().trim()) + "입니다.";
                 }
 
             } catch (IOException e) {

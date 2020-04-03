@@ -3,8 +3,10 @@ package com.n0xx1.livedetect;
 import android.animation.AnimatorInflater;
 import android.animation.AnimatorSet;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.RectF;
 import android.hardware.Camera;
 import android.os.Bundle;
@@ -57,6 +59,7 @@ import com.n0xx1.livedetect.textdetection.TextRecognitionProcessor;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeMap;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -92,6 +95,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private WorkflowState currentWorkflowState;
     private SearchEngine searchEngine;
     private Text2Speech tts;
+    private Chip bottomPromptChip;
+    private RecyclerView previewCardCarousel;
 
     private BottomSheetBehavior<View> bottomSheetBehavior;
     private BottomSheetScrimView bottomSheetScrimView;
@@ -102,6 +107,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ImageView expandedImageView;
     private boolean slidingSheetUpFromHiddenState;
 
+    private final TreeMap<Integer, SearchedObject> searchedObjectMap = new TreeMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -128,6 +134,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         searchButtonAnimator.setTarget(searchButton);
 
         searchProgressBar = findViewById(R.id.search_progress_bar);
+
+        previewCardCarousel = findViewById(R.id.card_recycler_view);
+        previewCardCarousel.setHasFixedSize(true);
+        previewCardCarousel.setLayoutManager(
+                new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
+        previewCardCarousel.addItemDecoration(new CardItemDecoration(getResources()));
+
 
         setUpBottomSheet();
 
@@ -395,15 +408,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 });
 
-        workflowModel.detectedHtml.observe(
+        workflowModel.barcodedObject.observe(
                 this,
-                html -> {
-                    if (html != null) {
+                barcodedObject -> {
+
+                    if (barcodedObject != null) {
                         ArrayList<BarcodeField> barcodeFieldList = new ArrayList<>();
-                        barcodeFieldList.add(new BarcodeField("Result", html));
+                        barcodeFieldList.add(new BarcodeField("Result", barcodedObject.getName()));
                         BarcodeResultFragment.show(getSupportFragmentManager(), barcodeFieldList);
                     }
                 });
+
+        workflowModel.barcodedProducts.observe(
+                this,
+                barcodedProducts -> {
+                    if (!barcodedProducts.getProductList().isEmpty()) {
+
+                    }
+                }
+        );
 
 //        workflowModel.detectedText.observe(
 //                this,
@@ -617,5 +640,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         cameraSource.setFrameProcessor(frameProcessor);
 
+    }
+
+    private static class CardItemDecoration extends RecyclerView.ItemDecoration {
+
+        private final int cardSpacing;
+
+        private CardItemDecoration(Resources resources) {
+            cardSpacing = resources.getDimensionPixelOffset(R.dimen.preview_card_spacing);
+        }
+
+        @Override
+        public void getItemOffsets(
+                @NonNull Rect outRect,
+                @NonNull View view,
+                @NonNull RecyclerView parent,
+                @NonNull RecyclerView.State state) {
+            int adapterPosition = parent.getChildAdapterPosition(view);
+            outRect.left = adapterPosition == 0 ? cardSpacing * 2 : cardSpacing;
+            if (parent.getAdapter() != null
+                    && adapterPosition == parent.getAdapter().getItemCount() - 1) {
+                outRect.right = cardSpacing;
+            }
+        }
     }
 }
