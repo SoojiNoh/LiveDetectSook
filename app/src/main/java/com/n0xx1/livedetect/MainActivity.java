@@ -66,12 +66,13 @@ import java.util.TreeMap;
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String TAG = "MainActivity";
-    private static final int MULTI_MODE = 0;
-    private static final int PROMI_MODE = 1;
-    private static final int TEXT_MODE = 2;
-    private static final int LABEL_MODE = 3;
-    private static final int BARCODE_MODE = 4;
-    private static int CURRENT_MODE;
+
+    public static final int MULTI_MODE = 0;
+    public static final int PROMI_MODE = 1;
+    public static final int TEXT_MODE = 2;
+    public static final int LABEL_MODE = 3;
+    public static final int BARCODE_MODE = 4;
+    public static int CURRENT_MODE;
 
     private MultiEntityProcessor multiEntityProcessor;
     private ProminentEntityProcessor prominentEntityProcessor;
@@ -96,7 +97,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private WorkflowModel workflowModel;
     private WorkflowState currentWorkflowState;
     private SearchEngine searchEngine;
-    private Text2Speech tts;
     private Chip bottomPromptChip;
     private RecyclerView previewCardCarousel;
     private ViewGroup dotViewContainer;
@@ -112,6 +112,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private boolean slidingSheetUpFromHiddenState;
 
     private final TreeMap<Integer, SearchedEntity> searchedEntityMap = new TreeMap<>();
+
+    public Text2Speech tts;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -187,6 +189,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
 
         setUpWorkflowModel();
+        workflowModel.mainActivity = this;
 
         staticConfirmationController = new StaticConfirmationController(graphicOverlay, workflowModel, getApplicationContext());
         multiEntityProcessor = new MultiEntityProcessor(graphicOverlay, workflowModel, staticConfirmationController);
@@ -655,13 +658,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+
     private void setEntityMode(){
         if (PreferenceUtils.isMultipleEntitysMode(this))
             setProcessor(MULTI_MODE);
         else
             setProcessor(PROMI_MODE);
 
-        tts.speech("entity mode");
+        tts.speech("object mode");
         Toast.makeText(getApplicationContext(),
                 "entity detection mode", Toast.LENGTH_SHORT).show();
     }

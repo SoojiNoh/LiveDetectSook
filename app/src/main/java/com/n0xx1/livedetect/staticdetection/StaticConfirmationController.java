@@ -7,6 +7,7 @@ import android.view.View;
 
 import androidx.annotation.Nullable;
 
+import com.n0xx1.livedetect.MainActivity;
 import com.n0xx1.livedetect.R;
 import com.n0xx1.livedetect.camera.CameraReticleAnimator;
 import com.n0xx1.livedetect.camera.GraphicOverlay;
@@ -30,6 +31,7 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
 
     private final Context context;
     private final WorkflowModel workflowModel;
+    private final MainActivity mainActivity;
     private final GraphicOverlay graphicOverlay;
     private CountDownTimer countDownTimer;
     private long confirmationTimeMs;
@@ -38,6 +40,9 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
 
 
     private Bitmap image;
+
+    private boolean isTouchingDown = false;
+
     /**
      * @param graphicOverlay Used to refresh camera overlay when the confirmation progress updates.
      */
@@ -46,7 +51,7 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
         this.workflowModel = workflowModel;
         this.graphicOverlay = graphicOverlay;
         this.context = context;
-
+        this.mainActivity = workflowModel.mainActivity;
         cameraReticleAnimator = new CameraReticleAnimator(graphicOverlay);
         reticleOuterRingRadius =
                 graphicOverlay
@@ -107,15 +112,23 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
 
         countDownTimer =
                 new CountDownTimer(confirmationTimeMs, /* countDownInterval= */ 20) {
+
+
                     @Override
                     public void onTick(long millisUntilFinished) {
                         progress = (float) (confirmationTimeMs - millisUntilFinished) / confirmationTimeMs;
                         graphicOverlay.invalidate();
+                        if (!isTouchingDown) {
+                            isTouchingDown = true;
+                            workflowModel.mainActivity.tts.speech("요청중");
+                        }
+
                     }
 
                     @Override
                     public void onFinish() {
                         progress = 1;
+                        workflowModel.mainActivity.tts.speech((mainActivity.CURRENT_MODE == mainActivity.TEXT_MODE)? "텍스트를" : "오브젝트를" + "분석중 입니다.");
                     }
                 };
 

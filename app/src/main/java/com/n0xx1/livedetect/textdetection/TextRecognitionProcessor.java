@@ -19,6 +19,7 @@ import com.n0xx1.livedetect.camera.GraphicOverlay.Graphic;
 import com.n0xx1.livedetect.camera.WorkflowModel;
 import com.n0xx1.livedetect.settings.PreferenceUtils;
 import com.n0xx1.livedetect.staticdetection.StaticConfirmationController;
+import com.n0xx1.livedetect.text2speech.Text2Speech;
 
 import java.io.IOException;
 import java.util.List;
@@ -40,6 +41,9 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
     List<FirebaseVisionText.TextBlock> blocks;
     String text;
 
+    boolean hasFoundText = false;
+    Text2Speech tts;
+
     public TextRecognitionProcessor(GraphicOverlay graphicOverlay, WorkflowModel workflowModel, StaticConfirmationController staticConfirmationController) {
 
         this.workflowModel = workflowModel;
@@ -59,6 +63,8 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
         }
 
         this.detector = FirebaseVision.getInstance().getOnDeviceTextRecognizer();
+
+        tts = new Text2Speech(workflowModel.getApplication().getApplicationContext(), workflowModel.mainActivity);
     }
 
 
@@ -91,8 +97,12 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
 
         graphicOverlay.add(new TextDotGraphic(graphicOverlay));
 
+
+
 //        List<FirebaseVisionText.TextBlock> blocks = results.getTextBlocks();
         blocks = results.getTextBlocks();
+
+        if (!blocks.isEmpty()) alertTextFound();
 
         for (int i = 0; i < blocks.size(); i++) {
             List<FirebaseVisionText.Line> lines = blocks.get(i).getLines();
@@ -113,5 +123,12 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
         Log.w(TAG, "Text detection failed." + e);
     }
 
+
+    public void alertTextFound(){
+        if (hasFoundText == false) {
+            hasFoundText = true;
+            tts.speech("텍스트 발견. 조사하시려면 화면을 길게 눌러주세요");
+        }
+    }
 
 }

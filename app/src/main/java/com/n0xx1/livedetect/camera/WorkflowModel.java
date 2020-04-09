@@ -10,6 +10,7 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.MutableLiveData;
 
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcode;
+import com.n0xx1.livedetect.MainActivity;
 import com.n0xx1.livedetect.barcode.BarcodedEntity;
 import com.n0xx1.livedetect.barcode.BarcodedProducts;
 import com.n0xx1.livedetect.entitydetection.DetectedEntity;
@@ -44,6 +45,8 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
         SEARCHING,
         SEARCHED
     }
+
+    public MainActivity mainActivity;
 
     public final MutableLiveData<WorkflowState> workflowState = new MutableLiveData<>();
 
