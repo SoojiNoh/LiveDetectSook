@@ -1,4 +1,4 @@
-package com.n0xx1.livedetect.objectdetection;
+package com.n0xx1.livedetect.entitydetection;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -19,12 +19,12 @@ import com.n0xx1.livedetect.camera.GraphicOverlay;
 import com.n0xx1.livedetect.camera.GraphicOverlay.Graphic;
 
 /**
- * Draws the detected object info over the camera preview for prominent object detection mode.
+ * Draws the detected entity info over the camera preview for prominent entity detection mode.
  */
-class ObjectGraphicInProminentMode extends Graphic {
+class EntityGraphicInProminentMode extends Graphic {
 
-    private final FirebaseVisionObject object;
-    private final ObjectConfirmationController confirmationController;
+    private final FirebaseVisionObject entity;
+    private final EntityConfirmationController confirmationController;
 
     private final Paint scrimPaint;
     private final Paint eraserPaint;
@@ -35,13 +35,13 @@ class ObjectGraphicInProminentMode extends Graphic {
     private final int boxGradientEndColor;
     private final int boxCornerRadius;
 
-    ObjectGraphicInProminentMode(
+    EntityGraphicInProminentMode(
             GraphicOverlay overlay,
-            FirebaseVisionObject object,
-            ObjectConfirmationController confirmationController) {
+            FirebaseVisionObject entity,
+            EntityConfirmationController confirmationController) {
         super(overlay);
 
-        this.object = object;
+        this.entity = entity;
         this.confirmationController = confirmationController;
 
         scrimPaint = new Paint();
@@ -53,8 +53,8 @@ class ObjectGraphicInProminentMode extends Graphic {
                             0,
                             overlay.getWidth(),
                             overlay.getHeight(),
-                            ContextCompat.getColor(context, R.color.object_confirmed_bg_gradient_start),
-                            ContextCompat.getColor(context, R.color.object_confirmed_bg_gradient_end),
+                            ContextCompat.getColor(context, R.color.entity_confirmed_bg_gradient_start),
+                            ContextCompat.getColor(context, R.color.entity_confirmed_bg_gradient_end),
                             TileMode.CLAMP));
         } else {
             scrimPaint.setShader(
@@ -63,8 +63,8 @@ class ObjectGraphicInProminentMode extends Graphic {
                             0,
                             overlay.getWidth(),
                             overlay.getHeight(),
-                            ContextCompat.getColor(context, R.color.object_detected_bg_gradient_start),
-                            ContextCompat.getColor(context, R.color.object_detected_bg_gradient_end),
+                            ContextCompat.getColor(context, R.color.entity_detected_bg_gradient_start),
+                            ContextCompat.getColor(context, R.color.entity_detected_bg_gradient_end),
                             TileMode.CLAMP));
         }
 
@@ -90,9 +90,9 @@ class ObjectGraphicInProminentMode extends Graphic {
 
     @Override
     public void draw(Canvas canvas) {
-        RectF rect = overlay.translateRect(object.getBoundingBox());
+        RectF rect = overlay.translateRect(entity.getBoundingBox());
 
-        // Draws the dark background scrim and leaves the object area clear.
+        // Draws the dark background scrim and leaves the entity area clear.
         canvas.drawRect(0, 0, canvas.getWidth(), canvas.getHeight(), scrimPaint);
         canvas.drawRoundRect(rect, boxCornerRadius, boxCornerRadius, eraserPaint);
 

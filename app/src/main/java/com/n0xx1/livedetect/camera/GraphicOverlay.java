@@ -23,7 +23,7 @@ public class GraphicOverlay extends View {
     private final List<Graphic> graphics = new ArrayList<>();
 
     /**
-     * Base class for a custom graphics object to be rendered within the graphic overlay. Subclass
+     * Base class for a custom graphics entity to be rendered within the graphic overlay. Subclass
      * this and implement the {@link Graphic#draw(Canvas)} method to define the graphics element. Add
      * instances to the overlay using {@link GraphicOverlay#add(Graphic)}.
      */
@@ -120,7 +120,7 @@ public class GraphicOverlay extends View {
                 translateY(rect.bottom));
     }
 
-    /** Draws the overlay with its associated graphic objects. */
+    /** Draws the overlay with its associated graphic entitys. */
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);

@@ -13,7 +13,7 @@ public class Text {
     final Bitmap image;
     final String text;
     ArrayList<Vertex> vertices;
-    int objectThumbnailCornerRadius;
+    int entityThumbnailCornerRadius;
 
 
     Text(Resources resources, Bitmap image, String text, ArrayList<Vertex> vertices) {
@@ -21,7 +21,7 @@ public class Text {
         this.image = null;
         this.text = text;
         this.vertices = vertices;
-        this.objectThumbnailCornerRadius =
+        this.entityThumbnailCornerRadius =
                 resources.getDimensionPixelOffset(R.dimen.bounding_box_corner_radius);
     }
 
@@ -29,8 +29,8 @@ public class Text {
     public synchronized Bitmap getBitmap() {
 //        if (textThumbnail == null) {
 //            textThumnail =
-//                    Utils.getCornerRoundedBitmap(textThumbnail, objectThumbnailCornerRadius);
+//                    Utils.getCornerRoundedBitmap(textThumbnail, entityThumbnailCornerRadius);
 //        }
-        return Utils.getCornerRoundedBitmap(image, objectThumbnailCornerRadius);
+        return Utils.getCornerRoundedBitmap(image, entityThumbnailCornerRadius);
     }
 }

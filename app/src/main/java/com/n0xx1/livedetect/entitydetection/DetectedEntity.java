@@ -1,4 +1,4 @@
-package com.n0xx1.livedetect.objectdetection;
+package com.n0xx1.livedetect.entitydetection;
 
 import android.graphics.Bitmap;
 import android.graphics.Rect;
@@ -12,13 +12,13 @@ import com.google.firebase.ml.vision.objects.FirebaseVisionObject;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-public class DetectedObject {
+public class DetectedEntity {
 
-    private static final String TAG = "DetectedObject";
+    private static final String TAG = "DetectedEntity";
     private static final int MAX_IMAGE_WIDTH = 640;
 
-    private final FirebaseVisionObject object;
-    private final int objectIndex;
+    private final FirebaseVisionObject entity;
+    private final int entityIndex;
     private final FirebaseVisionImage image;
 
     @Nullable
@@ -26,28 +26,28 @@ public class DetectedObject {
     @Nullable
     private byte[] jpegBytes = null;
 
-    public DetectedObject(FirebaseVisionObject object, int objectIndex, FirebaseVisionImage image) {
-        this.object = object;
-        this.objectIndex = objectIndex;
+    public DetectedEntity(FirebaseVisionObject entity, int entityIndex, FirebaseVisionImage image) {
+        this.entity = entity;
+        this.entityIndex = entityIndex;
         this.image = image;
     }
 
     @Nullable
-    public Integer getObjectId() {
-        return object.getTrackingId();
+    public Integer getEntityId() {
+        return entity.getTrackingId();
     }
 
-    public int getObjectIndex() {
-        return objectIndex;
+    public int getEntityIndex() {
+        return entityIndex;
     }
 
     public Rect getBoundingBox() {
-        return object.getBoundingBox();
+        return entity.getBoundingBox();
     }
 
     public synchronized Bitmap getBitmap() {
         if (bitmap == null) {
-            Rect boundingBox = object.getBoundingBox();
+            Rect boundingBox = entity.getBoundingBox();
             bitmap =
                     Bitmap.createBitmap(
                             image.getBitmap(),
@@ -71,7 +71,7 @@ public class DetectedObject {
                 getBitmap().compress(Bitmap.CompressFormat.JPEG, /* quality= */ 100, stream);
                 jpegBytes = stream.toByteArray();
             } catch (IOException e) {
-                Log.e(TAG, "Error getting object image data!");
+                Log.e(TAG, "Error getting entity image data!");
             }
         }
 

@@ -11,37 +11,37 @@ import java.util.List;
 
 public class BarcodedProducts {
 
-    private final BarcodedObject object;
-    private final List<Product> productList;
-//    private final int objectThumbnailCornerRadius;
+    private final BarcodedEntity entity;
+    private final List<Entity> productList;
+//    private final int entityThumbnailCornerRadius;
 
     @Nullable
-    private Bitmap objectThumbnail;
+    private Bitmap entityThumbnail;
 
-    public BarcodedProducts(BarcodedObject object, List<Product> productList) {
-        this.object = object;
+    public BarcodedProducts(BarcodedEntity entity, List<Entity> productList) {
+        this.entity = entity;
         this.productList = productList;
-//        this.objectThumbnailCornerRadius =
+//        this.entityThumbnailCornerRadius =
 //                resources.getDimensionPixelOffset(R.dimen.bounding_box_corner_radius);
     }
 
-//    public int getObjectIndex() {
-//        return object.getObjectIndex();
+//    public int getEntityIndex() {
+//        return entity.getEntityIndex();
 //    }
 
-    public List<Product> getProductList() {
+    public List<Entity> getEntityList() {
         return productList;
     }
 
 //    public Rect getBoundingBox() {
-//        return object.getBoundingBox();
+//        return entity.getBoundingBox();
 //    }
 
-//    public synchronized Bitmap getObjectThumbnail() {
-//        if (objectThumbnail == null) {
-//            objectThumbnail =
-//                    Utils.getCornerRoundedBitmap(object.getBitmap(), objectThumbnailCornerRadius);
+//    public synchronized Bitmap getEntityThumbnail() {
+//        if (entityThumbnail == null) {
+//            entityThumbnail =
+//                    Utils.getCornerRoundedBitmap(entity.getBitmap(), entityThumbnailCornerRadius);
 //        }
-//        return objectThumbnail;
+//        return entityThumbnail;
 //    }
 }

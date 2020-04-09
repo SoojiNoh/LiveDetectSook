@@ -12,14 +12,14 @@ public class Label {
     final Bitmap image;
     final String label;
     ArrayList<Vertex> vertices;
-    int objectThumbnailCornerRadius;
+    int entityThumbnailCornerRadius;
 
     Label(Resources resources, Bitmap image, String label, ArrayList<Vertex> vertices) {
 //        this.textThumbnail = textThumbnail;
         this.image = null;
         this.label = label;
         this.vertices = vertices;
-        this.objectThumbnailCornerRadius =
+        this.entityThumbnailCornerRadius =
                 resources.getDimensionPixelOffset(R.dimen.bounding_box_corner_radius);
     }
 
@@ -27,7 +27,7 @@ public class Label {
     public synchronized Bitmap getBitmap() {
 //        if (textThumbnail == null) {
 //            textThumnail =
-//                    Utils.getCornerRoundedBitmap(textThumbnail, objectThumbnailCornerRadius);
+//                    Utils.getCornerRoundedBitmap(textThumbnail, entityThumbnailCornerRadius);
 //        }
         return image;
     }

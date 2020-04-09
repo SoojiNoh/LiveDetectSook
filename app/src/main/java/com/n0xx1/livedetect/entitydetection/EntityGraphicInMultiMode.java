@@ -1,4 +1,4 @@
-package com.n0xx1.livedetect.objectdetection;
+package com.n0xx1.livedetect.entitydetection;
 
 import android.content.res.Resources;
 import android.graphics.Canvas;
@@ -19,12 +19,12 @@ import com.n0xx1.livedetect.camera.GraphicOverlay;
 import com.n0xx1.livedetect.camera.GraphicOverlay.Graphic;
 
 /**
- * Draws the detected object info over the camera preview for multiple objects detection mode.
+ * Draws the detected entity info over the camera preview for multiple entitys detection mode.
  */
-class ObjectGraphicInMultiMode extends Graphic {
+class EntityGraphicInMultiMode extends Graphic {
 
-    private final DetectedObject object;
-    private final ObjectConfirmationController confirmationController;
+    private final DetectedEntity entity;
+    private final EntityConfirmationController confirmationController;
 
     private final Paint boxPaint;
     private final Paint scrimPaint;
@@ -36,13 +36,13 @@ class ObjectGraphicInMultiMode extends Graphic {
     private final int boxCornerRadius;
     private final int minBoxLen;
 
-    ObjectGraphicInMultiMode(
+    EntityGraphicInMultiMode(
             GraphicOverlay overlay,
-            DetectedObject object,
-            ObjectConfirmationController confirmationController) {
+            DetectedEntity entity,
+            EntityConfirmationController confirmationController) {
         super(overlay);
 
-        this.object = object;
+        this.entity = entity;
         this.confirmationController = confirmationController;
 
         Resources resources = context.getResources();
@@ -66,20 +66,20 @@ class ObjectGraphicInMultiMode extends Graphic {
                         0,
                         overlay.getWidth(),
                         overlay.getHeight(),
-                        ContextCompat.getColor(context, R.color.object_confirmed_bg_gradient_start),
-                        ContextCompat.getColor(context, R.color.object_confirmed_bg_gradient_end),
+                        ContextCompat.getColor(context, R.color.entity_confirmed_bg_gradient_start),
+                        ContextCompat.getColor(context, R.color.entity_confirmed_bg_gradient_end),
                         TileMode.MIRROR));
 
         eraserPaint = new Paint();
         eraserPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
 
         minBoxLen =
-                resources.getDimensionPixelOffset(R.dimen.object_reticle_outer_ring_stroke_radius) * 2;
+                resources.getDimensionPixelOffset(R.dimen.entity_reticle_outer_ring_stroke_radius) * 2;
     }
 
     @Override
     public void draw(Canvas canvas) {
-        RectF rect = overlay.translateRect(object.getBoundingBox());
+        RectF rect = overlay.translateRect(entity.getBoundingBox());
 
         float boxWidth = rect.width() * confirmationController.getProgress();
         float boxHeight = rect.height() * confirmationController.getProgress();
@@ -95,7 +95,7 @@ class ObjectGraphicInMultiMode extends Graphic {
                 new RectF(cx - boxWidth / 2f, cy - boxHeight / 2f, cx + boxWidth / 2f, cy + boxHeight / 2f);
 
         if (confirmationController.isConfirmed()) {
-            // Draws the dark background scrim and leaves the object area clear.
+            // Draws the dark background scrim and leaves the entity area clear.
             canvas.drawRect(0, 0, canvas.getWidth(), canvas.getHeight(), scrimPaint);
             canvas.drawRoundRect(rect, boxCornerRadius, boxCornerRadius, eraserPaint);
         }

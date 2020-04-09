@@ -180,7 +180,7 @@ public class StaticEngine {
         @Override
         protected AnnotateImageResponse doInBackground(Object... params) {
             try {
-                Log.d(TAG, "created Cloud Vision request object, sending request");
+                Log.d(TAG, "created Cloud Vision request entity, sending request");
                 BatchAnnotateImagesResponse response = mRequest.execute();
 
 //                labels = response.getResponses().get(0).getLabelAnnotations();
@@ -324,7 +324,7 @@ public class StaticEngine {
                 vision.images().annotate(batchAnnotateImagesRequest);
         // Due to a bug: requests to Vision API containing large images fail when GZipped.
         annotateRequest.setDisableGZipContent(true);
-        Log.d(TAG, "created Cloud Vision request object, sending request");
+        Log.d(TAG, "created Cloud Vision request entity, sending request");
 
         return annotateRequest;
     }
@@ -355,7 +355,7 @@ public class StaticEngine {
         return message.toString();
     }
 
-    private static Bitmap rectBitmap(List<EntityAnnotation> objects, Bitmap bitmap) {
+    private static Bitmap rectBitmap(List<EntityAnnotation> entitys, Bitmap bitmap) {
 
         //The Color of the Rectangle to Draw on top of Text
         Paint paint = new Paint();
@@ -367,12 +367,12 @@ public class StaticEngine {
         Canvas canvas = new Canvas(tempBitmap);
         canvas.drawBitmap(bitmap, 0, 0, null);
 
-        for (EntityAnnotation object : objects) {
+        for (EntityAnnotation entity : entitys) {
 
             Path path = new Path();
             //                path.reset(); // only needed when reusing this path for a new build
 
-            ArrayList <Vertex> vertices = (ArrayList) object.getBoundingPoly().getVertices();
+            ArrayList <Vertex> vertices = (ArrayList) entity.getBoundingPoly().getVertices();
 
             Vertex vertexFirst = vertices.get(0);
             path.moveTo(vertexFirst.getX(), vertexFirst.getY()); // used for first point

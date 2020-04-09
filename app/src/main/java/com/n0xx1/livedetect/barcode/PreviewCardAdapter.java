@@ -41,7 +41,7 @@ public class PreviewCardAdapter  extends RecyclerView.Adapter<PreviewCardAdapter
     @Override
     public void onBindViewHolder(@NonNull CardViewHolder holder, int position) {
         BarcodedProducts barcodedProducts = barcodedProductsList.get(position);
-        holder.bindProducts(barcodedProducts.getProductList());
+        holder.bindProducts(barcodedProducts.getEntityList());
         holder.itemView.setOnClickListener(v -> cardItemListener.onPreviewCardClicked(barcodedProducts));
     }
 
@@ -65,21 +65,21 @@ public class PreviewCardAdapter  extends RecyclerView.Adapter<PreviewCardAdapter
             imageSize = itemView.getResources().getDimensionPixelOffset(R.dimen.preview_card_image_size);
         }
 
-        private void bindProducts(List<Product> products) {
+        private void bindProducts(List<Entity> products) {
             if (products.isEmpty()) {
                 imageView.setVisibility(View.GONE);
                 titleView.setText(R.string.static_image_card_no_result_title);
                 subtitleView.setText(R.string.static_image_card_no_result_subtitle);
             } else {
-                Product topProduct = products.get(0);
+                Entity topEntity = products.get(0);
                 imageView.setVisibility(View.VISIBLE);
                 imageView.setImageDrawable(null);
-                if (!TextUtils.isEmpty(topProduct.imageUrl)) {
-                    new ImageDownloadTask(imageView, imageSize).execute(topProduct.imageUrl);
+                if (!TextUtils.isEmpty(topEntity.imageUrl)) {
+                    new ImageDownloadTask(imageView, imageSize).execute(topEntity.imageUrl);
                 } else {
                     imageView.setImageResource(R.drawable.logo_google_cloud);
                 }
-                titleView.setText(topProduct.title);
+                titleView.setText(topEntity.title);
                 subtitleView.setText(
                         itemView
                                 .getResources()

@@ -5,7 +5,7 @@ import android.animation.ValueAnimator;
 
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
-/** Custom animator for the object or barcode reticle in live camera. */
+/** Custom animator for the entity or barcode reticle in live camera. */
 public class CameraReticleAnimator {
 
     private static final long DURATION_RIPPLE_FADE_IN_MS = 333;

@@ -12,6 +12,7 @@ import android.hardware.Camera;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -37,13 +38,13 @@ import com.n0xx1.livedetect.camera.FrameProcessor;
 import com.n0xx1.livedetect.camera.GraphicOverlay;
 import com.n0xx1.livedetect.camera.WorkflowModel;
 import com.n0xx1.livedetect.camera.WorkflowModel.WorkflowState;
-import com.n0xx1.livedetect.objectdetection.MultiObjectProcessor;
-import com.n0xx1.livedetect.objectdetection.ProminentObjectProcessor;
+import com.n0xx1.livedetect.entitydetection.MultiEntityProcessor;
+import com.n0xx1.livedetect.entitydetection.ProminentEntityProcessor;
 import com.n0xx1.livedetect.productsearch.BottomSheetScrimView;
-import com.n0xx1.livedetect.productsearch.Product;
-import com.n0xx1.livedetect.productsearch.ProductAdapter;
+import com.n0xx1.livedetect.productsearch.Entity;
+import com.n0xx1.livedetect.productsearch.EntityAdapter;
 import com.n0xx1.livedetect.productsearch.SearchEngine;
-import com.n0xx1.livedetect.productsearch.SearchedObject;
+import com.n0xx1.livedetect.productsearch.SearchedEntity;
 import com.n0xx1.livedetect.settings.PreferenceUtils;
 import com.n0xx1.livedetect.settings.SettingsActivity;
 import com.n0xx1.livedetect.staticdetection.Label;
@@ -52,7 +53,7 @@ import com.n0xx1.livedetect.staticdetection.StaticConfirmationController;
 import com.n0xx1.livedetect.staticdetection.StaticEngine;
 import com.n0xx1.livedetect.staticdetection.Text;
 import com.n0xx1.livedetect.staticdetection.TextAdapter;
-import com.n0xx1.livedetect.staticdetection.TextedObject;
+import com.n0xx1.livedetect.staticdetection.TextedEntity;
 import com.n0xx1.livedetect.text2speech.Text2Speech;
 import com.n0xx1.livedetect.textdetection.TextRecognitionProcessor;
 
@@ -63,7 +64,7 @@ import java.util.TreeMap;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private static final String TAG = "LiveObjectActivity";
+    private static final String TAG = "MainActivity";
     private static final int MULTI_MODE = 0;
     private static final int PROMI_MODE = 1;
     private static final int TEXT_MODE = 2;
@@ -71,8 +72,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static final int BARCODE_MODE = 4;
     private static int CURRENT_MODE;
 
-    private MultiObjectProcessor multiObjectProcessor;
-    private ProminentObjectProcessor prominentObjectProcessor;
+    private MultiEntityProcessor multiEntityProcessor;
+    private ProminentEntityProcessor prominentEntityProcessor;
     private TextRecognitionProcessor textRecognitionProcessor;
     private BarcodeProcessor barcodeProcessor;
     private StaticConfirmationController staticConfirmationController;
@@ -97,23 +98,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Text2Speech tts;
     private Chip bottomPromptChip;
     private RecyclerView previewCardCarousel;
+    private ViewGroup dotViewContainer;
+    private int dotViewSize;
 
     private BottomSheetBehavior<View> bottomSheetBehavior;
     private BottomSheetScrimView bottomSheetScrimView;
     private RecyclerView productRecyclerView;
     private TextView bottomSheetTitleView;
-    private Bitmap objectThumbnailForBottomSheet;
-    private Bitmap objectThumbnailForZoomView;
+    private Bitmap entityThumbnailForBottomSheet;
+    private Bitmap entityThumbnailForZoomView;
     private ImageView expandedImageView;
     private boolean slidingSheetUpFromHiddenState;
 
-    private final TreeMap<Integer, SearchedObject> searchedObjectMap = new TreeMap<>();
+    private final TreeMap<Integer, SearchedEntity> searchedEntityMap = new TreeMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_live_object);
+        setContentView(R.layout.activity_main);
 
         preview = findViewById(R.id.camera_preview);
         graphicOverlay = findViewById(R.id.camera_preview_graphic_overlay);
@@ -132,8 +135,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         searchButtonAnimator =
                 (AnimatorSet) AnimatorInflater.loadAnimator(this, R.animator.search_button_enter);
         searchButtonAnimator.setTarget(searchButton);
-
         searchProgressBar = findViewById(R.id.search_progress_bar);
+
+        bottomPromptChip = findViewById(R.id.bottom_prompt_chip);
 
         previewCardCarousel = findViewById(R.id.card_recycler_view);
         previewCardCarousel.setHasFixedSize(true);
@@ -141,6 +145,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 new LinearLayoutManager(this, RecyclerView.HORIZONTAL, false));
         previewCardCarousel.addItemDecoration(new CardItemDecoration(getResources()));
 
+        dotViewContainer = findViewById(R.id.dot_view_container);
+        dotViewSize = getResources().getDimensionPixelOffset(R.dimen.static_image_dot_view_size);
 
         setUpBottomSheet();
 
@@ -160,16 +166,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setUpWorkflowModel();
 
         staticConfirmationController = new StaticConfirmationController(graphicOverlay, workflowModel, getApplicationContext());
-
-        multiObjectProcessor = new MultiObjectProcessor(graphicOverlay, workflowModel, staticConfirmationController);
-
-        prominentObjectProcessor = new ProminentObjectProcessor(graphicOverlay, workflowModel, staticConfirmationController);
-
+        multiEntityProcessor = new MultiEntityProcessor(graphicOverlay, workflowModel, staticConfirmationController);
+        prominentEntityProcessor = new ProminentEntityProcessor(graphicOverlay, workflowModel, staticConfirmationController);
         textRecognitionProcessor = new TextRecognitionProcessor(graphicOverlay, workflowModel, staticConfirmationController);
-
         barcodeProcessor = new BarcodeProcessor(graphicOverlay, workflowModel);
-
-
 
     }
 
@@ -182,7 +182,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         currentWorkflowState = WorkflowState.NOT_STARTED;
 
-        setObjectMode();
+        setEntityMode();
         workflowModel.setWorkflowState(WorkflowState.DETECTING);
 
     }
@@ -221,8 +221,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             workflowModel.onSearchButtonClicked();
 
         } else if (id == R.id.bottom_sheet_scrim_view) {
-//            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-            bottomSheetScrimView.zoomImageFromThumb(expandedImageView, objectThumbnailForZoomView);
+            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+//            bottomSheetScrimView.zoomImageFromThumb(expandedImageView, entityThumbnailForZoomView);
         } else if (id == R.id.close_button) {
             onBackPressed();
 
@@ -243,7 +243,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else if (id == R.id.text_button) {
             if (textButton.isSelected()) {
                 textButton.setSelected(false);
-                setObjectMode();
+                setEntityMode();
             } else {
                 textButton.setSelected(true);
                 barcodeButton.setSelected(false);
@@ -255,7 +255,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else if (id == R.id.barcode_button) {
             if (barcodeButton.isSelected() && !textButton.isSelected()) {
                 barcodeButton.setSelected(false);
-                setObjectMode();
+                setEntityMode();
             } else {
                 barcodeButton.setSelected(true);
                 textButton.setSelected(false);
@@ -320,22 +320,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     @Override
                     public void onSlide(@NonNull View bottomSheet, float slideOffset) {
-                        SearchedObject searchedObject = workflowModel.searchedObject.getValue();
-                        TextedObject textedObject = workflowModel.textedObject.getValue();
+                        SearchedEntity searchedEntity = workflowModel.searchedEntity.getValue();
+                        TextedEntity textedEntity = workflowModel.textedEntity.getValue();
 
-                        if ((searchedObject == null && textedObject == null) || Float.isNaN(slideOffset)) {
+                        if ((searchedEntity == null && textedEntity == null) || Float.isNaN(slideOffset)) {
                             return;
                         }
 
                         int collapsedStateHeight =
                                 Math.min(bottomSheetBehavior.getPeekHeight(), bottomSheet.getHeight());
 
-                        if(searchedObject!=null) {
+                        if(searchedEntity!=null) {
                             if (slidingSheetUpFromHiddenState) {
                                 RectF thumbnailSrcRect =
-                                        graphicOverlay.translateRect(searchedObject.getBoundingBox());
+                                        graphicOverlay.translateRect(searchedEntity.getBoundingBox());
                                 bottomSheetScrimView.updateWithThumbnailTranslateAndScale(
-                                        objectThumbnailForBottomSheet,
+                                        entityThumbnailForBottomSheet,
                                         collapsedStateHeight,
                                         slideOffset,
                                         thumbnailSrcRect);
@@ -343,9 +343,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             } else {
 
                             }
-                        } else if (textedObject!=null){
+                        } else if (textedEntity!=null){
                             bottomSheetScrimView.updateWithThumbnailTranslate(
-                                    objectThumbnailForBottomSheet, collapsedStateHeight, slideOffset, bottomSheet);
+                                    entityThumbnailForBottomSheet, collapsedStateHeight, slideOffset, bottomSheet);
                         }
                     }
                 });
@@ -357,7 +357,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         productRecyclerView = findViewById(R.id.product_recycler_view);
         productRecyclerView.setHasFixedSize(true);
         productRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        productRecyclerView.setAdapter(new ProductAdapter(ImmutableList.of()));
+        productRecyclerView.setAdapter(new EntityAdapter(ImmutableList.of()));
     }
 
     private void setUpWorkflowModel() {
@@ -382,39 +382,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 });
 
-        // Observes changes on the object to search, if happens, fire product search request.
-        workflowModel.objectToSearch.observe(
-                this, object -> {
-                    objectThumbnailForZoomView = object.getBitmap();
-                    searchEngine.search(this, object, workflowModel);
+        // Observes changes on the entity to search, if happens, fire product search request.
+        workflowModel.entityToSearch.observe(
+                this, entity -> {
+                    entityThumbnailForZoomView = entity.getBitmap();
+                    searchEngine.search(this, entity, workflowModel);
                 });
 
-        // Observes changes on the object that has search completed, if happens, show the bottom sheet
+        // Observes changes on the entity that has search completed, if happens, show the bottom sheet
         // to present search result.
-        workflowModel.searchedObject.observe(
+        workflowModel.searchedEntity.observe(
                 this,
-                searchedObject -> {
-                    if (searchedObject != null) {
-                        List<Product> productList = searchedObject.getProductList();
-                        objectThumbnailForBottomSheet = searchedObject.getObjectThumbnail();
+                searchedEntity -> {
+                    if (searchedEntity != null) {
+                        List<Entity> productList = searchedEntity.getEntityList();
+                        entityThumbnailForBottomSheet = searchedEntity.getEntityThumbnail();
                         bottomSheetTitleView.setText(
                                 getResources()
                                         .getQuantityString(
                                                 R.plurals.bottom_sheet_title, productList.size(), productList.size()));
-                        productRecyclerView.setAdapter(new ProductAdapter(productList));
+                        productRecyclerView.setAdapter(new EntityAdapter(productList));
                         slidingSheetUpFromHiddenState = true;
                         bottomSheetBehavior.setPeekHeight(preview.getHeight() / 2);
                         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
                     }
                 });
 
-        workflowModel.barcodedObject.observe(
+        workflowModel.barcodedEntity.observe(
                 this,
-                barcodedObject -> {
+                barcodedEntity -> {
 
-                    if (barcodedObject != null) {
+                    if (barcodedEntity != null) {
                         ArrayList<BarcodeField> barcodeFieldList = new ArrayList<>();
-                        barcodeFieldList.add(new BarcodeField("Result", barcodedObject.getName()));
+                        barcodeFieldList.add(new BarcodeField("Result", barcodedEntity.getName()));
                         BarcodeResultFragment.show(getSupportFragmentManager(), barcodeFieldList);
                     }
                 });
@@ -422,7 +422,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         workflowModel.barcodedProducts.observe(
                 this,
                 barcodedProducts -> {
-                    if (!barcodedProducts.getProductList().isEmpty()) {
+                    if (!barcodedProducts.getEntityList().isEmpty()) {
 
                     }
                 }
@@ -453,7 +453,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //                }
 //        );
 
-        // Observes changes on the object to search, if happens, fire product search request.
+        // Observes changes on the entity to search, if happens, fire product search request.
         workflowModel.staticToDetect.observe(
                 this, image -> {
                     staticEngine = new StaticEngine(getApplicationContext(), workflowModel, graphicOverlay);
@@ -461,16 +461,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         staticEngine.detectText(image, workflowModel);
                     else if (CURRENT_MODE == PROMI_MODE || CURRENT_MODE == MULTI_MODE)
                         staticEngine.detectLabel(image, workflowModel);
-//                    objectThumbnailForZoomView = textBimap;
+//                    entityThumbnailForZoomView = textBimap;
                 });
 
-        workflowModel.textedObject.observe(
+        workflowModel.textedEntity.observe(
                 this,
-                textedObject -> {
-                    if (textedObject != null) {
-                        List<Text> textList = textedObject.getTextList();
-                        objectThumbnailForBottomSheet = textedObject.getTextThumbnail();
-                        objectThumbnailForZoomView = textedObject.getTextRectBitmap();
+                textedEntity -> {
+                    if (textedEntity != null) {
+                        List<Text> textList = textedEntity.getTextList();
+                        entityThumbnailForBottomSheet = textedEntity.getTextThumbnail();
+                        entityThumbnailForZoomView = textedEntity.getTextRectBitmap();
                         bottomSheetTitleView.setText(
                                 getResources()
                                         .getQuantityString(
@@ -484,13 +484,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
         );
 
-        workflowModel.labeledObject.observe(
+        workflowModel.labeledEntity.observe(
                 this,
-                labeledObject -> {
-                    if (labeledObject != null) {
-                        List<Label> labelList = labeledObject.getLabelList();
-                        objectThumbnailForBottomSheet = labeledObject.getLabelThumbnail();
-//                        objectThumbnailForZoomView = labeledObject.getLabelRectBitmap();
+                labeledEntity -> {
+                    if (labeledEntity != null) {
+                        List<Label> labelList = labeledEntity.getLabelList();
+                        entityThumbnailForBottomSheet = labeledEntity.getLabelThumbnail();
+//                        entityThumbnailForZoomView = labeledEntity.getLabelRectBitmap();
                         bottomSheetTitleView.setText(
                                 getResources()
                                         .getQuantityString(
@@ -518,7 +518,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 promptChip.setText(
                         workflowState == WorkflowState.CONFIRMING
                                 ? R.string.prompt_hold_camera_steady
-                                : R.string.prompt_point_at_an_object);
+                                : R.string.prompt_point_at_an_entity);
                 startCameraPreview();
                 break;
             case CONFIRMED:
@@ -558,7 +558,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case DETECTED:
             case CONFIRMING:
                 promptChip.setVisibility(View.VISIBLE);
-                promptChip.setText(R.string.prompt_point_at_an_object);
+                promptChip.setText(R.string.prompt_point_at_an_entity);
                 searchButton.setVisibility(View.GONE);
                 startCameraPreview();
                 break;
@@ -601,15 +601,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void setObjectMode(){
-        if (PreferenceUtils.isMultipleObjectsMode(this))
+    private void setEntityMode(){
+        if (PreferenceUtils.isMultipleEntitysMode(this))
             setProcessor(MULTI_MODE);
         else
             setProcessor(PROMI_MODE);
 
-        tts.speech("object mode");
+        tts.speech("entity mode");
         Toast.makeText(getApplicationContext(),
-                "object detection mode", Toast.LENGTH_SHORT).show();
+                "entity detection mode", Toast.LENGTH_SHORT).show();
     }
 
     private void setProcessor(int i){
@@ -623,11 +623,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch(i) {
             case MULTI_MODE:
                 staticConfirmationController.activate(LABEL_MODE);
-                frameProcessor = multiObjectProcessor;
+                frameProcessor = multiEntityProcessor;
                 break;
             case PROMI_MODE:
                 staticConfirmationController.activate(LABEL_MODE);
-                frameProcessor = prominentObjectProcessor;
+                frameProcessor = prominentEntityProcessor;
                 break;
             case TEXT_MODE:
                 staticConfirmationController.activate(TEXT_MODE);

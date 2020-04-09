@@ -1,4 +1,4 @@
-package com.n0xx1.livedetect.objectdetection;
+package com.n0xx1.livedetect.entitydetection;
 
 import android.content.res.Resources;
 import android.graphics.Canvas;
@@ -15,9 +15,9 @@ import com.n0xx1.livedetect.camera.GraphicOverlay.Graphic;
 
 /**
  * A camera reticle that locates at the center of canvas to indicate the system is active but has
- * not recognized an object yet.
+ * not recognized an entity yet.
  */
-class ObjectReticleGraphic extends Graphic {
+class EntityReticleGraphic extends Graphic {
 
     private final CameraReticleAnimator animator;
 
@@ -32,7 +32,7 @@ class ObjectReticleGraphic extends Graphic {
     private final int rippleStrokeWidth;
     private final int rippleAlpha;
 
-    ObjectReticleGraphic(GraphicOverlay overlay, CameraReticleAnimator animator) {
+    EntityReticleGraphic(GraphicOverlay overlay, CameraReticleAnimator animator) {
         super(overlay);
         this.animator = animator;
 
@@ -40,20 +40,20 @@ class ObjectReticleGraphic extends Graphic {
         outerRingFillPaint = new Paint();
         outerRingFillPaint.setStyle(Style.FILL);
         outerRingFillPaint.setColor(
-                ContextCompat.getColor(context, R.color.object_reticle_outer_ring_fill));
+                ContextCompat.getColor(context, R.color.entity_reticle_outer_ring_fill));
 
         outerRingStrokePaint = new Paint();
         outerRingStrokePaint.setStyle(Style.STROKE);
         outerRingStrokePaint.setStrokeWidth(
-                resources.getDimensionPixelOffset(R.dimen.object_reticle_outer_ring_stroke_width));
+                resources.getDimensionPixelOffset(R.dimen.entity_reticle_outer_ring_stroke_width));
         outerRingStrokePaint.setStrokeCap(Cap.ROUND);
         outerRingStrokePaint.setColor(
-                ContextCompat.getColor(context, R.color.object_reticle_outer_ring_stroke));
+                ContextCompat.getColor(context, R.color.entity_reticle_outer_ring_stroke));
 
         innerRingStrokePaint = new Paint();
         innerRingStrokePaint.setStyle(Style.STROKE);
         innerRingStrokePaint.setStrokeWidth(
-                resources.getDimensionPixelOffset(R.dimen.object_reticle_inner_ring_stroke_width));
+                resources.getDimensionPixelOffset(R.dimen.entity_reticle_inner_ring_stroke_width));
         innerRingStrokePaint.setStrokeCap(Cap.ROUND);
         innerRingStrokePaint.setColor(ContextCompat.getColor(context, R.color.white));
 
@@ -62,14 +62,14 @@ class ObjectReticleGraphic extends Graphic {
         ripplePaint.setColor(ContextCompat.getColor(context, R.color.reticle_ripple));
 
         outerRingFillRadius =
-                resources.getDimensionPixelOffset(R.dimen.object_reticle_outer_ring_fill_radius);
+                resources.getDimensionPixelOffset(R.dimen.entity_reticle_outer_ring_fill_radius);
         outerRingStrokeRadius =
-                resources.getDimensionPixelOffset(R.dimen.object_reticle_outer_ring_stroke_radius);
+                resources.getDimensionPixelOffset(R.dimen.entity_reticle_outer_ring_stroke_radius);
         innerRingStrokeRadius =
-                resources.getDimensionPixelOffset(R.dimen.object_reticle_inner_ring_stroke_radius);
-        rippleSizeOffset = resources.getDimensionPixelOffset(R.dimen.object_reticle_ripple_size_offset);
+                resources.getDimensionPixelOffset(R.dimen.entity_reticle_inner_ring_stroke_radius);
+        rippleSizeOffset = resources.getDimensionPixelOffset(R.dimen.entity_reticle_ripple_size_offset);
         rippleStrokeWidth =
-                resources.getDimensionPixelOffset(R.dimen.object_reticle_ripple_stroke_width);
+                resources.getDimensionPixelOffset(R.dimen.entity_reticle_ripple_stroke_width);
         rippleAlpha = ripplePaint.getAlpha();
     }
 

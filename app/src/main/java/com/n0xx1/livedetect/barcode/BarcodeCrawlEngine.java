@@ -59,9 +59,9 @@ public class BarcodeCrawlEngine {
 
         @Override
         protected void onPostExecute(Void result) {
-            BarcodedObject barcodedObject = new BarcodedObject(title, barcode, description);
-            workflowModel.barcodedObject.setValue(barcodedObject);
-            ProductCrawlEngine productCrawlEngine = new ProductCrawlEngine(workflowModel, barcodedObject);
+            BarcodedEntity barcodedEntity = new BarcodedEntity(title, barcode, description);
+            workflowModel.barcodedEntity.setValue(barcodedEntity);
+            ProductCrawlEngine productCrawlEngine = new ProductCrawlEngine(workflowModel, barcodedEntity);
         }
 
         private void crawl(){

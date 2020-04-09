@@ -1,4 +1,4 @@
-package com.n0xx1.livedetect.objectdetection;
+package com.n0xx1.livedetect.entitydetection;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -11,21 +11,21 @@ import com.n0xx1.livedetect.R;
 import com.n0xx1.livedetect.camera.GraphicOverlay;
 import com.n0xx1.livedetect.camera.GraphicOverlay.Graphic;
 
-/** A dot to indicate a detected object used by multiple objects detection mode. */
-class ObjectDotGraphic extends Graphic {
+/** A dot to indicate a detected entity used by multiple entitys detection mode. */
+class EntityDotGraphic extends Graphic {
 
-    private final ObjectDotAnimator animator;
+    private final EntityDotAnimator animator;
     private final Paint paint;
     private final PointF center;
     private final int dotRadius;
     private final int dotAlpha;
 
-    ObjectDotGraphic(GraphicOverlay overlay, DetectedObject object, ObjectDotAnimator animator) {
+    EntityDotGraphic(GraphicOverlay overlay, DetectedEntity entity, EntityDotAnimator animator) {
         super(overlay);
 
         this.animator = animator;
 
-        Rect box = object.getBoundingBox();
+        Rect box = entity.getBoundingBox();
         center =
                 new PointF(
                         overlay.translateX((box.left + box.right) / 2f),
@@ -35,7 +35,7 @@ class ObjectDotGraphic extends Graphic {
         paint.setStyle(Style.FILL);
         paint.setColor(Color.WHITE);
 
-        dotRadius = context.getResources().getDimensionPixelOffset(R.dimen.object_dot_radius);
+        dotRadius = context.getResources().getDimensionPixelOffset(R.dimen.entity_dot_radius);
         dotAlpha = paint.getAlpha();
     }
 

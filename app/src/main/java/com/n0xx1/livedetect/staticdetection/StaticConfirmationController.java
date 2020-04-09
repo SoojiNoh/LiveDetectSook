@@ -51,7 +51,7 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
         reticleOuterRingRadius =
                 graphicOverlay
                         .getResources()
-                        .getDimensionPixelOffset(R.dimen.object_reticle_outer_ring_stroke_radius);
+                        .getDimensionPixelOffset(R.dimen.entity_reticle_outer_ring_stroke_radius);
 
 
 

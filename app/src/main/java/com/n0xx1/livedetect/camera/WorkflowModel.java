@@ -10,18 +10,18 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.MutableLiveData;
 
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcode;
-import com.n0xx1.livedetect.barcode.BarcodedObject;
+import com.n0xx1.livedetect.barcode.BarcodedEntity;
 import com.n0xx1.livedetect.barcode.BarcodedProducts;
-import com.n0xx1.livedetect.objectdetection.DetectedObject;
-import com.n0xx1.livedetect.productsearch.Product;
+import com.n0xx1.livedetect.entitydetection.DetectedEntity;
+import com.n0xx1.livedetect.productsearch.Entity;
 import com.n0xx1.livedetect.productsearch.SearchEngine.SearchResultListener;
-import com.n0xx1.livedetect.productsearch.SearchedObject;
+import com.n0xx1.livedetect.productsearch.SearchedEntity;
 import com.n0xx1.livedetect.settings.PreferenceUtils;
 import com.n0xx1.livedetect.staticdetection.Label;
-import com.n0xx1.livedetect.staticdetection.LabeledObject;
+import com.n0xx1.livedetect.staticdetection.LabeledEntity;
 import com.n0xx1.livedetect.staticdetection.StaticEngine.StaticResultListener;
 import com.n0xx1.livedetect.staticdetection.Text;
-import com.n0xx1.livedetect.staticdetection.TextedObject;
+import com.n0xx1.livedetect.staticdetection.TextedEntity;
 
 import java.util.HashSet;
 import java.util.List;
@@ -47,27 +47,27 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
 
     public final MutableLiveData<WorkflowState> workflowState = new MutableLiveData<>();
 
-    public final MutableLiveData<DetectedObject> objectToSearch = new MutableLiveData<>();
-    public final MutableLiveData<SearchedObject> searchedObject = new MutableLiveData<>();
-    public final MutableLiveData<LabeledObject> labeledObject = new MutableLiveData<>();
+    public final MutableLiveData<DetectedEntity> entityToSearch = new MutableLiveData<>();
+    public final MutableLiveData<SearchedEntity> searchedEntity = new MutableLiveData<>();
+    public final MutableLiveData<LabeledEntity> labeledEntity = new MutableLiveData<>();
 
     public final MutableLiveData<Bitmap> staticToDetect = new MutableLiveData<>();
-    public final MutableLiveData<TextedObject> textedObject = new MutableLiveData<>();
+    public final MutableLiveData<TextedEntity> textedEntity = new MutableLiveData<>();
 
     public final MutableLiveData<FirebaseVisionBarcode> detectedBarcode = new MutableLiveData<>();
 
-    public final MutableLiveData<BarcodedObject> barcodedObject = new MutableLiveData<>();
+    public final MutableLiveData<BarcodedEntity> barcodedEntity = new MutableLiveData<>();
     public final MutableLiveData<BarcodedProducts> barcodedProducts = new MutableLiveData<>();
     public final MutableLiveData<String> detectedText = new MutableLiveData<>();
 
 
     public final MutableLiveData<Bitmap> detectedImage = new MutableLiveData<>();
 
-    private final Set<Integer> objectIdsToSearch = new HashSet<>();
+    private final Set<Integer> entityIdsToSearch = new HashSet<>();
 
     private boolean isCameraLive = false;
     @Nullable
-    private DetectedObject confirmedObject;
+    private DetectedEntity confirmedEntity;
 
     public WorkflowModel(Application application) {
         super(application);
@@ -78,19 +78,19 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
         if (!workflowState.equals(WorkflowState.CONFIRMED)
                 && !workflowState.equals(WorkflowState.SEARCHING)
                 && !workflowState.equals(WorkflowState.SEARCHED)) {
-            confirmedObject = null;
+            confirmedEntity = null;
         }
         this.workflowState.setValue(workflowState);
     }
 
     @MainThread
-    public void confirmingObject(DetectedObject object, float progress) {
+    public void confirmingEntity(DetectedEntity entity, float progress) {
         boolean isConfirmed = (Float.compare(progress, 1f) == 0);
         if (isConfirmed) {
-            confirmedObject = object;
+            confirmedEntity = entity;
             if (PreferenceUtils.isAutoSearchEnabled(getContext())) {
                 setWorkflowState(WorkflowState.SEARCHING);
-                triggerSearch(object);
+                triggerSearch(entity);
             } else {
                 setWorkflowState(WorkflowState.CONFIRMED);
             }
@@ -101,28 +101,28 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
 
     @MainThread
     public void onSearchButtonClicked() {
-        if (confirmedObject == null) {
+        if (confirmedEntity == null) {
             return;
         }
 
         setWorkflowState(WorkflowState.SEARCHING);
-        triggerSearch(confirmedObject);
+        triggerSearch(confirmedEntity);
     }
 
-    private void triggerSearch(DetectedObject object) {
-        Integer objectId = checkNotNull(object.getObjectId());
-        if (objectIdsToSearch.contains(objectId)) {
+    private void triggerSearch(DetectedEntity entity) {
+        Integer entityId = checkNotNull(entity.getEntityId());
+        if (entityIdsToSearch.contains(entityId)) {
             // Already in searching.
             return;
         }
 
-        objectIdsToSearch.add(objectId);
-        objectToSearch.setValue(object);
+        entityIdsToSearch.add(entityId);
+        entityToSearch.setValue(entity);
     }
 
     public void markCameraLive() {
         isCameraLive = true;
-        objectIdsToSearch.clear();
+        entityIdsToSearch.clear();
     }
 
     public void markCameraFrozen() {
@@ -134,23 +134,23 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
     }
 
     @Override
-    public void onSearchCompleted(DetectedObject object, List<Product> products) {
-        if (!object.equals(confirmedObject)) {
-            // Drops the search result from the object that has lost focus.
+    public void onSearchCompleted(DetectedEntity entity, List<Entity> products) {
+        if (!entity.equals(confirmedEntity)) {
+            // Drops the search result from the entity that has lost focus.
             return;
         }
 
-        objectIdsToSearch.remove(object.getObjectId());
+        entityIdsToSearch.remove(entity.getEntityId());
         setWorkflowState(WorkflowState.SEARCHED);
-        searchedObject.setValue(
-                new SearchedObject(getContext().getResources(), confirmedObject, products));
+        searchedEntity.setValue(
+                new SearchedEntity(getContext().getResources(), confirmedEntity, products));
     }
 
     @Override
     public void onStaticLabelCompleted(List<Label> texts, Bitmap image, Bitmap image_rect) {
         setWorkflowState(WorkflowState.SEARCHED);
-        labeledObject.setValue(
-                new LabeledObject(getContext().getResources(), texts, image, image_rect)
+        labeledEntity.setValue(
+                new LabeledEntity(getContext().getResources(), texts, image, image_rect)
         );
 
     }
@@ -158,8 +158,8 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
     @Override
     public void onStaticTextCompleted(List<Text> texts, Bitmap image, Bitmap image_rect) {
         setWorkflowState(WorkflowState.SEARCHED);
-        textedObject.setValue(
-                new TextedObject(getContext().getResources(), texts, image, image_rect)
+        textedEntity.setValue(
+                new TextedEntity(getContext().getResources(), texts, image, image_rect)
         );
 
     }

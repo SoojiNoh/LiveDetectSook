@@ -19,14 +19,14 @@ public class PreferenceUtils {
         return getBooleanPref(context, R.string.pref_key_enable_auto_search, true);
     }
 
-    public static boolean isMultipleObjectsMode(Context context) {
+    public static boolean isMultipleEntitysMode(Context context) {
         return getBooleanPref(
-                context, R.string.pref_key_object_detector_enable_multiple_objects, false);
+                context, R.string.pref_key_entity_detector_enable_multiple_entitys, false);
     }
 
     public static boolean isClassificationEnabled(Context context) {
         return getBooleanPref(
-                context, R.string.pref_key_object_detector_enable_classification, false);
+                context, R.string.pref_key_entity_detector_enable_classification, false);
     }
 
     @Nullable
@@ -86,7 +86,7 @@ public class PreferenceUtils {
 
 
     public static int getConfirmationTimeMs(Context context) {
-        if (isMultipleObjectsMode(context)) {
+        if (isMultipleEntitysMode(context)) {
             return 300;
         } else if (isAutoSearchEnabled(context)) {
             return getIntPref(context, R.string.pref_key_confirmation_time_in_auto_search, 1500);

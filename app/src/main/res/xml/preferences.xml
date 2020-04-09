@@ -14,19 +14,19 @@
     </androidx.preference.PreferenceCategory>
 
     <androidx.preference.PreferenceCategory
-        android:title="@string/pref_category_object_detection">
+        android:title="@string/pref_category_entity_detection">
 
         <androidx.preference.SwitchPreferenceCompat
             android:defaultValue="false"
-            android:key="@string/pref_key_object_detector_enable_multiple_objects"
+            android:key="@string/pref_key_entity_detector_enable_multiple_entitys"
             android:persistent="true"
-            android:title="@string/pref_title_object_detector_enable_multiple_objects"/>
+            android:title="@string/pref_title_entity_detector_enable_multiple_entitys"/>
 
         <androidx.preference.SwitchPreferenceCompat
             android:defaultValue="false"
-            android:key="@string/pref_key_object_detector_enable_classification"
+            android:key="@string/pref_key_entity_detector_enable_classification"
             android:persistent="true"
-            android:title="@string/pref_title_object_detector_enable_classification"/>
+            android:title="@string/pref_title_entity_detector_enable_classification"/>
 
     </androidx.preference.PreferenceCategory>
 

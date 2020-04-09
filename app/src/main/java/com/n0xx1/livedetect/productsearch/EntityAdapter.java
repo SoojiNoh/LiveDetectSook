@@ -13,22 +13,22 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerView.Adapter;
 
 import com.n0xx1.livedetect.R;
-import com.n0xx1.livedetect.productsearch.ProductAdapter.ProductViewHolder;
+import com.n0xx1.livedetect.productsearch.EntityAdapter.EntityViewHolder;
 import com.n0xx1.livedetect.text2speech.Text2Speech;
 
 import java.util.List;
 
 /** Presents the list of product items from cloud product search. */
-public class ProductAdapter extends Adapter<ProductViewHolder>{
+public class EntityAdapter extends Adapter<EntityViewHolder>{
 
     private Text2Speech tts;
 
-    static class ProductViewHolder extends RecyclerView.ViewHolder {
+    static class EntityViewHolder extends RecyclerView.ViewHolder {
 
-//        static ProductViewHolder create(ViewGroup parent) {
+//        static EntityViewHolder create(ViewGroup parent) {
 //            View view =
 //                    LayoutInflater.from(parent.getContext()).inflate(R.layout.product_item, parent, false);
-//            return new ProductViewHolder(view);
+//            return new EntityViewHolder(view);
 //        }
 
         private final ImageView imageView;
@@ -36,7 +36,7 @@ public class ProductAdapter extends Adapter<ProductViewHolder>{
         private final TextView subtitleView;
         private final int imageSize;
 
-        private ProductViewHolder(View view) {
+        private EntityViewHolder(View view) {
             super(view);
             imageView = view.findViewById(R.id.product_image);
             titleView = view.findViewById(R.id.product_title);
@@ -44,7 +44,7 @@ public class ProductAdapter extends Adapter<ProductViewHolder>{
             imageSize = view.getResources().getDimensionPixelOffset(R.dimen.product_item_image_size);
         }
 
-        void bindProduct(Product product) {
+        void bindEntity(Entity product) {
             imageView.setImageDrawable(null);
             if (!TextUtils.isEmpty(product.imageUrl)) {
                 new ImageDownloadTask(imageView, imageSize).execute(product.imageUrl);
@@ -56,18 +56,18 @@ public class ProductAdapter extends Adapter<ProductViewHolder>{
         }
     }
 
-    private final List<Product> productList;
+    private final List<Entity> productList;
 
-    public ProductAdapter(List<Product> productList) {
+    public EntityAdapter(List<Entity> productList) {
         this.productList = productList;
     }
 
     @Override
     @NonNull
-    public ProductViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public EntityViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view =
                 LayoutInflater.from(parent.getContext()).inflate(R.layout.product_item, parent, false);
-        ProductViewHolder holder= new ProductViewHolder(view);
+        EntityViewHolder holder= new EntityViewHolder(view);
 
 
         tts = new Text2Speech(parent.getContext(), (Activity) parent.getContext());
@@ -79,13 +79,13 @@ public class ProductAdapter extends Adapter<ProductViewHolder>{
             }
         });
 
-//        return ProductViewHolder.create(parent);
+//        return EntityViewHolder.create(parent);
         return holder;
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ProductViewHolder holder, int position) {
-        holder.bindProduct(productList.get(position));
+    public void onBindViewHolder(@NonNull EntityViewHolder holder, int position) {
+        holder.bindEntity(productList.get(position));
     }
 
     @Override

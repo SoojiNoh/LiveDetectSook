@@ -20,16 +20,16 @@ public class ProductCrawlEngine {
     private String htmlPageUrl;
 //    private String htmlContentInStringFormat="";
 
-    private BarcodedObject barcodedObject;
+    private BarcodedEntity barcodedEntity;
 
-    List<Product> listProduct;
+    List<Entity> listEntity;
 
-    public ProductCrawlEngine(WorkflowModel workflowModel, BarcodedObject barcodedObject){
+    public ProductCrawlEngine(WorkflowModel workflowModel, BarcodedEntity barcodedEntity){
 
         this.workflowModel = workflowModel;
-        this.barcodedObject = barcodedObject;
+        this.barcodedEntity = barcodedEntity;
 
-        htmlPageUrl="https://search.shopping.naver.com/search/all.nhn?query="+barcodedObject.getName()+"&cat_id=&frm=NVSHATC";
+        htmlPageUrl="https://search.shopping.naver.com/search/all.nhn?query="+barcodedEntity.getName()+"&cat_id=&frm=NVSHATC";
 
 
         JsoupAsyncTask jsoupAsyncTask = new JsoupAsyncTask();
@@ -59,12 +59,12 @@ public class ProductCrawlEngine {
 
         @Override
         protected void onPostExecute(Void result) {
-            workflowModel.barcodedProducts.setValue(new BarcodedProducts(barcodedObject, listProduct ));
+            workflowModel.barcodedProducts.setValue(new BarcodedProducts(barcodedEntity, listEntity));
         }
 
         private void crawl(){
             try {
-                listProduct = new ArrayList<Product>();
+                listEntity = new ArrayList<Entity>();
 
                 Document doc = Jsoup.connect(htmlPageUrl).get();
 
@@ -73,7 +73,7 @@ public class ProductCrawlEngine {
                     title = doc.select("li[data-expose-rank="+i+"] div[class=tit] em").text();
                     price = doc.select("li[data-expose-rank="+i+"] span[class=price] em").text();
                     img = doc.select("li[data-expose-rank="+i+"] img[class=_productLazyImg]").attr("src");
-                    listProduct.add(new Product(title, price, img));
+                    listEntity.add(new Entity(title, price, img));
                 }
 
 

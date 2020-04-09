@@ -49,7 +49,7 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
         reticleOuterRingRadius =
                 graphicOverlay
                         .getResources()
-                        .getDimensionPixelOffset(R.dimen.object_reticle_outer_ring_stroke_radius);
+                        .getDimensionPixelOffset(R.dimen.entity_reticle_outer_ring_stroke_radius);
 
         FirebaseVisionObjectDetectorOptions.Builder optionsBuilder =
                 new FirebaseVisionObjectDetectorOptions.Builder()
@@ -67,7 +67,7 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
         try {
             detector.close();
         } catch (IOException e) {
-            Log.e(TAG, "Failed to close object detector!", e);
+            Log.e(TAG, "Failed to close entity detector!", e);
         }
     }
 

@@ -54,15 +54,15 @@ public class BottomSheetScrimView extends View{
         boxPaint = new Paint();
         boxPaint.setStyle(Paint.Style.STROKE);
         boxPaint.setStrokeWidth(
-                resources.getDimensionPixelOffset(R.dimen.object_thumbnail_stroke_width));
+                resources.getDimensionPixelOffset(R.dimen.entity_thumbnail_stroke_width));
         boxPaint.setColor(Color.WHITE);
 
-        thumbnailHeight = resources.getDimensionPixelOffset(R.dimen.object_thumbnail_height);
-        thumbnailMargin = resources.getDimensionPixelOffset(R.dimen.object_thumbnail_margin);
+        thumbnailHeight = resources.getDimensionPixelOffset(R.dimen.entity_thumbnail_height);
+        thumbnailMargin = resources.getDimensionPixelOffset(R.dimen.entity_thumbnail_margin);
         boxCornerRadius = resources.getDimensionPixelOffset(R.dimen.bounding_box_corner_radius);
     }
     /**
-     * Translates the object thumbnail up or down along with bottom sheet's sliding movement, with
+     * Translates the entity thumbnail up or down along with bottom sheet's sliding movement, with
      * keeping thumbnail size fixed.
      */
     public void updateWithThumbnailTranslate(
@@ -90,7 +90,7 @@ public class BottomSheetScrimView extends View{
     }
 
     /**
-     * Translates the object thumbnail from original bounding box location to at where the bottom
+     * Translates the entity thumbnail from original bounding box location to at where the bottom
      * sheet is settled as COLLAPSED state, with its size scales gradually.
      *
      * <p>It's only used by sliding the sheet up from hidden state to collapsed state.
@@ -135,7 +135,7 @@ public class BottomSheetScrimView extends View{
         if (thumbnailBitmap != null && downPercentInCollapsed < DOWN_PERCENT_TO_HIDE_THUMBNAIL) {
             int alpha = (int) ((1 - (downPercentInCollapsed / DOWN_PERCENT_TO_HIDE_THUMBNAIL)) * 255);
 
-            // Draws the object thumbnail.
+            // Draws the entity thumbnail.
             thumbnailPaint.setAlpha(alpha);
             canvas.drawBitmap(thumbnailBitmap, /* src= */ null, thumbnailRect, thumbnailPaint);
 

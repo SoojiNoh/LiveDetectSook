@@ -1,4 +1,4 @@
-package com.n0xx1.livedetect.objectdetection;
+package com.n0xx1.livedetect.entitydetection;
 
 import android.os.CountDownTimer;
 
@@ -7,18 +7,18 @@ import androidx.annotation.Nullable;
 import com.n0xx1.livedetect.camera.GraphicOverlay;
 import com.n0xx1.livedetect.settings.PreferenceUtils;
 
-public class ObjectConfirmationController {
+public class EntityConfirmationController {
 
     private final CountDownTimer countDownTimer;
 
     @Nullable
-    private Integer objectId = null;
+    private Integer entityId = null;
     private float progress = 0;
 
     /**
      * @param graphicOverlay Used to refresh camera overlay when the confirmation progress updates.
      */
-    ObjectConfirmationController(GraphicOverlay graphicOverlay) {
+    EntityConfirmationController(GraphicOverlay graphicOverlay) {
         long confirmationTimeMs = PreferenceUtils.getConfirmationTimeMs(graphicOverlay.getContext());
         countDownTimer =
                 new CountDownTimer(confirmationTimeMs, /* countDownInterval= */ 20) {
@@ -35,14 +35,14 @@ public class ObjectConfirmationController {
                 };
     }
 
-    void confirming(Integer objectId) {
-        if (objectId.equals(this.objectId)) {
+    void confirming(Integer entityId) {
+        if (entityId.equals(this.entityId)) {
             // Do nothing if it's already in confirming.
             return;
         }
 
         reset();
-        this.objectId = objectId;
+        this.entityId = entityId;
         countDownTimer.start();
     }
 
@@ -52,7 +52,7 @@ public class ObjectConfirmationController {
 
     void reset() {
         countDownTimer.cancel();
-        objectId = null;
+        entityId = null;
         progress = 0;
     }
 

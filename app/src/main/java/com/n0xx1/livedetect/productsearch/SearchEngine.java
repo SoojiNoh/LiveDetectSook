@@ -25,7 +25,7 @@ import com.google.api.services.vision.v1.model.Image;
 import com.n0xx1.livedetect.BuildConfig;
 import com.n0xx1.livedetect.MainActivity;
 import com.n0xx1.livedetect.PackageManagerUtils;
-import com.n0xx1.livedetect.objectdetection.DetectedObject;
+import com.n0xx1.livedetect.entitydetection.DetectedEntity;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -36,7 +36,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 //import com.android.volley.RequestQueue;
-//import com.android.volley.toolbox.JsonObjectRequest;
+//import com.android.volley.toolbox.JsonEntityRequest;
 //import com.android.volley.toolbox.Volley;
 
 public class SearchEngine {
@@ -54,13 +54,13 @@ public class SearchEngine {
     private static final String TAG = "SearchEngine";
 
     public interface SearchResultListener {
-        void onSearchCompleted(DetectedObject object, List<Product> productList);
+        void onSearchCompleted(DetectedEntity entity, List<Entity> productList);
     }
 
     private final Context mContext;
     private final Activity mActivity;
     private SearchResultListener mListener;
-    private DetectedObject mObject;
+    private DetectedEntity mEntity;
 
     private final ExecutorService requestCreationExecutor;
 
@@ -71,35 +71,35 @@ public class SearchEngine {
         requestCreationExecutor = Executors.newSingleThreadExecutor();
     }
 
-    public void search(Activity activity, DetectedObject object, SearchResultListener listener) {
-        // Crops the object image out of the full image is expensive, so do it off the UI thread.
+    public void search(Activity activity, DetectedEntity entity, SearchResultListener listener) {
+        // Crops the entity image out of the full image is expensive, so do it off the UI thread.
 
         mListener = listener;
-        mObject = object;
+        mEntity = entity;
 
-        Tasks.call(requestCreationExecutor, () -> new DetectionTask((MainActivity) mActivity, prepareAnnotationRequest(object.getBitmap()), object.getBitmap())
-//                prepareAnnotationRequest(object.getBitmap()))
+        Tasks.call(requestCreationExecutor, () -> new DetectionTask((MainActivity) mActivity, prepareAnnotationRequest(entity.getBitmap()), entity.getBitmap())
+//                prepareAnnotationRequest(entity.getBitmap()))
         ).addOnSuccessListener(
                 detectionTask -> detectionTask.execute()
         ).addOnFailureListener(
                 e -> {
                     Log.e(TAG, "Failed to create product search request!", e);
                     // Remove the below dummy code after your own product search backed hooked up.
-                    List<Product> productList = new ArrayList<>();
+                    List<Entity> productList = new ArrayList<>();
                     for (int i = 0; i < 8; i++) {
                         productList.add(
-                                new Product(/* imageUrl= */ "", "Product title " + i, "Product subtitle " + i));
+                                new Entity(/* imageUrl= */ "", "Entity title " + i, "Entity subtitle " + i));
                     }
-                    listener.onSearchCompleted(object, productList);
+                    listener.onSearchCompleted(entity, productList);
                 });
 
 
     }
 
-    private Annotate createRequest(DetectedObject searchingObject) throws Exception {
-        byte[] objectImageData = searchingObject.getImageData();
-        if (objectImageData == null) {
-            throw new Exception("Failed to get object image data!");
+    private Annotate createRequest(DetectedEntity searchingEntity) throws Exception {
+        byte[] entityImageData = searchingEntity.getImageData();
+        if (entityImageData == null) {
+            throw new Exception("Failed to get entity image data!");
         }
 
         // Hooks up with your own product search backend here.
@@ -178,7 +178,7 @@ public class SearchEngine {
                 vision.images().annotate(batchAnnotateImagesRequest);
         // Due to a bug: requests to Vision API containing large images fail when GZipped.
         annotateRequest.setDisableGZipContent(true);
-        Log.d(TAG, "created Cloud Vision request object, sending request");
+        Log.d(TAG, "created Cloud Vision request entity, sending request");
 
         return annotateRequest;
     }
@@ -202,7 +202,7 @@ public class SearchEngine {
             BatchAnnotateImagesResponse result = null;
 
             try {
-                Log.d(TAG, "created Cloud Vision request object, sending request");
+                Log.d(TAG, "created Cloud Vision request entity, sending request");
                 BatchAnnotateImagesResponse response = mRequest.execute();
 
 //                labels = response.getResponses().get(0).getLabelAnnotations();
@@ -228,7 +228,7 @@ public class SearchEngine {
 
             if (activity != null) {
 
-                List<Product> productList = new ArrayList<>();
+                List<Entity> productList = new ArrayList<>();
 
 
                 List<EntityAnnotation> labels = result.getResponses().get(0).getLabelAnnotations();
@@ -240,7 +240,7 @@ public class SearchEngine {
 
                         EntityAnnotation label = labels.get(i);
                         productList.add(
-                                new Product(/* imageUrl= */ "", label.get("description").toString(), label.get("score").toString()));
+                                new Entity(/* imageUrl= */ "", label.get("description").toString(), label.get("score").toString()));
                     }
 
                 } else {
@@ -250,7 +250,7 @@ public class SearchEngine {
                 }
 
 
-                mListener.onSearchCompleted(mObject, productList);
+                mListener.onSearchCompleted(mEntity, productList);
 
             }
         }

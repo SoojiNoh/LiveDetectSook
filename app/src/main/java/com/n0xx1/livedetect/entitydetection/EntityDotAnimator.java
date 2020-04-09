@@ -1,4 +1,4 @@
-package com.n0xx1.livedetect.objectdetection;
+package com.n0xx1.livedetect.entitydetection;
 
 import android.animation.AnimatorSet;
 import android.animation.ValueAnimator;
@@ -9,9 +9,9 @@ import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import com.n0xx1.livedetect.camera.GraphicOverlay;
 
 /**
- * Custom animator for the object dot.
+ * Custom animator for the entity dot.
  */
-class ObjectDotAnimator {
+class EntityDotAnimator {
 
     // All these time constants are in millisecond unit.
     private static final long DURATION_DOT_SCALE_UP_MS = 217;
@@ -24,7 +24,7 @@ class ObjectDotAnimator {
     private float radiusScale = 0f;
     private float alphaScale = 0f;
 
-    ObjectDotAnimator(final GraphicOverlay graphicOverlay) {
+    EntityDotAnimator(final GraphicOverlay graphicOverlay) {
         ValueAnimator dotScaleUpAnimator =
                 ValueAnimator.ofFloat(0f, 1.3f).setDuration(DURATION_DOT_SCALE_UP_MS);
         dotScaleUpAnimator.setInterpolator(new FastOutSlowInInterpolator());

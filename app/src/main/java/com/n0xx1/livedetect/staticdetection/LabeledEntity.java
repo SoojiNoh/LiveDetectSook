@@ -11,27 +11,27 @@ import com.n0xx1.livedetect.Utils;
 
 import java.util.List;
 
-public class LabeledObject {
+public class LabeledEntity {
 
-    //    private final DetectedObject object;
+    //    private final DetectedEntity entity;
     private final List<Label> labelList;
-    private final int objectThumbnailCornerRadius;
+    private final int entityThumbnailCornerRadius;
 
     @Nullable
     private Bitmap image;
     private Bitmap image_rect;
 
 
-    public LabeledObject(Resources resources, List<Label> labelList, Bitmap image, Bitmap image_rect) {
+    public LabeledEntity(Resources resources, List<Label> labelList, Bitmap image, Bitmap image_rect) {
         this.labelList = labelList;
-        this.objectThumbnailCornerRadius =
+        this.entityThumbnailCornerRadius =
                 resources.getDimensionPixelOffset(R.dimen.bounding_box_corner_radius);
         this.image = image;
         this.image_rect = image_rect;
     }
 
-//    public int getObjectIndex() {
-//        return object.getObjectIndex();
+//    public int getEntityIndex() {
+//        return entity.getEntityIndex();
 //    }
 
     public List<Label> getLabelList() {
@@ -46,7 +46,7 @@ public class LabeledObject {
     public synchronized Bitmap getLabelThumbnail(){
         if (image == null) {
             image =
-                    Utils.getCornerRoundedBitmap(image, objectThumbnailCornerRadius);
+                    Utils.getCornerRoundedBitmap(image, entityThumbnailCornerRadius);
         }
         return image;
     }
@@ -54,7 +54,7 @@ public class LabeledObject {
     public Bitmap getLabelRectBitmap(){
         if (image == null) {
             image =
-                    Utils.getCornerRoundedBitmap(image_rect, objectThumbnailCornerRadius);
+                    Utils.getCornerRoundedBitmap(image_rect, entityThumbnailCornerRadius);
         }
         return image_rect;
     }

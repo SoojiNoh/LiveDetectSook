@@ -17,7 +17,7 @@ import com.n0xx1.livedetect.settings.PreferenceUtils;
 ;
 
 /**
- * Similar to the camera reticle but with additional progress ring to indicate an object is getting
+ * Similar to the camera reticle but with additional progress ring to indicate an entity is getting
  * confirmed for a follow up processing, e.g. product search.
  */
 
@@ -41,42 +41,42 @@ public class TextDotGraphic extends Graphic {
         outerRingFillPaint = new Paint();
         outerRingFillPaint.setStyle(Style.FILL);
         outerRingFillPaint.setColor(
-                ContextCompat.getColor(context, R.color.object_reticle_outer_ring_fill));
+                ContextCompat.getColor(context, R.color.entity_reticle_outer_ring_fill));
 
         outerRingStrokePaint = new Paint();
         outerRingStrokePaint.setStyle(Style.STROKE);
         outerRingStrokePaint.setStrokeWidth(
-                resources.getDimensionPixelOffset(R.dimen.object_reticle_outer_ring_stroke_width));
+                resources.getDimensionPixelOffset(R.dimen.entity_reticle_outer_ring_stroke_width));
         outerRingStrokePaint.setStrokeCap(Cap.ROUND);
         outerRingStrokePaint.setColor(
-                ContextCompat.getColor(context, R.color.object_reticle_outer_ring_stroke));
+                ContextCompat.getColor(context, R.color.entity_reticle_outer_ring_stroke));
 
         progressRingStrokePaint = new Paint();
         progressRingStrokePaint.setStyle(Style.STROKE);
         progressRingStrokePaint.setStrokeWidth(
-                resources.getDimensionPixelOffset(R.dimen.object_reticle_outer_ring_stroke_width));
+                resources.getDimensionPixelOffset(R.dimen.entity_reticle_outer_ring_stroke_width));
         progressRingStrokePaint.setStrokeCap(Cap.ROUND);
         progressRingStrokePaint.setColor(ContextCompat.getColor(context, R.color.white));
 
-        if (PreferenceUtils.isMultipleObjectsMode(overlay.getContext())) {
+        if (PreferenceUtils.isMultipleEntitysMode(overlay.getContext())) {
             innerRingPaint = new Paint();
             innerRingPaint.setStyle(Style.FILL);
-            innerRingPaint.setColor(ContextCompat.getColor(context, R.color.object_reticle_inner_ring));
+            innerRingPaint.setColor(ContextCompat.getColor(context, R.color.entity_reticle_inner_ring));
         } else {
             innerRingPaint = new Paint();
             innerRingPaint.setStyle(Style.STROKE);
             innerRingPaint.setStrokeWidth(
-                    resources.getDimensionPixelOffset(R.dimen.object_reticle_inner_ring_stroke_width));
+                    resources.getDimensionPixelOffset(R.dimen.entity_reticle_inner_ring_stroke_width));
             innerRingPaint.setStrokeCap(Cap.ROUND);
             innerRingPaint.setColor(ContextCompat.getColor(context, R.color.white));
         }
 
         outerRingFillRadius =
-                resources.getDimensionPixelOffset(R.dimen.object_reticle_outer_ring_fill_radius);
+                resources.getDimensionPixelOffset(R.dimen.entity_reticle_outer_ring_fill_radius);
         outerRingStrokeRadius =
-                resources.getDimensionPixelOffset(R.dimen.object_reticle_outer_ring_stroke_radius);
+                resources.getDimensionPixelOffset(R.dimen.entity_reticle_outer_ring_stroke_radius);
         innerRingStrokeRadius =
-                resources.getDimensionPixelOffset(R.dimen.object_reticle_inner_ring_stroke_radius);
+                resources.getDimensionPixelOffset(R.dimen.entity_reticle_inner_ring_stroke_radius);
     }
 
     @Override
