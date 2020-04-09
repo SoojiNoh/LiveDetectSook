@@ -20,21 +20,25 @@ public class ProductCrawlEngine {
     private String htmlPageUrl;
 //    private String htmlContentInStringFormat="";
 
-    private BarcodedEntity barcodedEntity;
+    private Barcode barcode;
 
-    List<Entity> listEntity;
+    List<BarcodedProduct> listProduct;
+    JsoupAsyncTask jsoupAsyncTask;
 
-    public ProductCrawlEngine(WorkflowModel workflowModel, BarcodedEntity barcodedEntity){
+    public ProductCrawlEngine(WorkflowModel workflowModel, Barcode barcode){
 
         this.workflowModel = workflowModel;
-        this.barcodedEntity = barcodedEntity;
+        this.barcode = barcode;
 
-        htmlPageUrl="https://search.shopping.naver.com/search/all.nhn?query="+barcodedEntity.getName()+"&cat_id=&frm=NVSHATC";
+        htmlPageUrl="https://search.shopping.naver.com/search/all.nhn?query="+barcode.getName()+"&cat_id=&frm=NVSHATC";
 
 
-        JsoupAsyncTask jsoupAsyncTask = new JsoupAsyncTask();
+        jsoupAsyncTask = new JsoupAsyncTask();
+
+    }
+
+    public void crawl(){
         jsoupAsyncTask.execute();
-
     }
 
 //    public String getHtmlContent(){
@@ -43,7 +47,7 @@ public class ProductCrawlEngine {
 
     private class JsoupAsyncTask extends AsyncTask<Void, Void, Void> {
 
-        String title,price,img;
+        String title, price, imgUrl, siteUrl;
 
         @Override
         protected void onPreExecute() {
@@ -59,21 +63,23 @@ public class ProductCrawlEngine {
 
         @Override
         protected void onPostExecute(Void result) {
-            workflowModel.barcodedProducts.setValue(new BarcodedProducts(barcodedEntity, listEntity));
+            BarcodedEntity barcodedEntity = new BarcodedEntity(barcode, listProduct);
+            workflowModel.barcodedEntity.setValue(barcodedEntity);
         }
 
         private void crawl(){
             try {
-                listEntity = new ArrayList<Entity>();
+                listProduct = new ArrayList<BarcodedProduct>();
 
                 Document doc = Jsoup.connect(htmlPageUrl).get();
 
 
                 for (int i=1 ; i<=5 ; i++){
-                    title = doc.select("li[data-expose-rank="+i+"] div[class=tit] em").text();
-                    price = doc.select("li[data-expose-rank="+i+"] span[class=price] em").text();
-                    img = doc.select("li[data-expose-rank="+i+"] img[class=_productLazyImg]").attr("src");
-                    listEntity.add(new Entity(title, price, img));
+                    title = doc.select("li[data-expose-rank="+i+"] div[class=tit]").text();
+                    price = doc.select("li[data-expose-rank="+i+"] span[class=price] em").text().replaceAll("[^0-9]", "");;
+                    imgUrl = doc.select("li[data-expose-rank="+i+"] img[class=_productLazyImg]").attr("src");
+                    siteUrl = doc.select("li[data-expose-rank="+i+"] div[class=tit] a").text();
+                    listProduct.add(new BarcodedProduct(title, Integer.parseInt(price), imgUrl, siteUrl));
                 }
 
 

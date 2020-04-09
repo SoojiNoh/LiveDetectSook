@@ -2,6 +2,7 @@ package com.n0xx1.livedetect.camera;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 
 import androidx.annotation.MainThread;
@@ -11,12 +12,12 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.google.firebase.ml.vision.barcode.FirebaseVisionBarcode;
 import com.n0xx1.livedetect.MainActivity;
+import com.n0xx1.livedetect.barcode.Barcode;
 import com.n0xx1.livedetect.barcode.BarcodedEntity;
-import com.n0xx1.livedetect.barcode.BarcodedProducts;
 import com.n0xx1.livedetect.entitydetection.DetectedEntity;
-import com.n0xx1.livedetect.productsearch.Entity;
-import com.n0xx1.livedetect.productsearch.SearchEngine.SearchResultListener;
-import com.n0xx1.livedetect.productsearch.SearchedEntity;
+import com.n0xx1.livedetect.entitysearch.Entity;
+import com.n0xx1.livedetect.entitysearch.SearchEngine.SearchResultListener;
+import com.n0xx1.livedetect.entitysearch.SearchedEntity;
 import com.n0xx1.livedetect.settings.PreferenceUtils;
 import com.n0xx1.livedetect.staticdetection.Label;
 import com.n0xx1.livedetect.staticdetection.LabeledEntity;
@@ -47,6 +48,7 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
     }
 
     public MainActivity mainActivity;
+    public Resources resources;
 
     public final MutableLiveData<WorkflowState> workflowState = new MutableLiveData<>();
 
@@ -58,9 +60,9 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
     public final MutableLiveData<TextedEntity> textedEntity = new MutableLiveData<>();
 
     public final MutableLiveData<FirebaseVisionBarcode> detectedBarcode = new MutableLiveData<>();
-
+    public final MutableLiveData<Barcode> barcode = new MutableLiveData<>();
     public final MutableLiveData<BarcodedEntity> barcodedEntity = new MutableLiveData<>();
-    public final MutableLiveData<BarcodedProducts> barcodedProducts = new MutableLiveData<>();
+
     public final MutableLiveData<String> detectedText = new MutableLiveData<>();
 
 

@@ -1,6 +1,8 @@
 package com.n0xx1.livedetect.barcode;
 
 
+import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,6 +11,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.n0xx1.livedetect.MainActivity;
 import com.n0xx1.livedetect.R;
 import com.n0xx1.livedetect.barcode.BarcodeFieldAdapter.BarcodeFieldViewHolder;
 
@@ -17,11 +20,23 @@ import java.util.List;
 /** Presents a list of field info in the detected barcode. */
 class BarcodeFieldAdapter extends RecyclerView.Adapter<BarcodeFieldViewHolder> {
 
+    private static final String TAG = "BarcodeFieldAdapter";
+
     static class BarcodeFieldViewHolder extends RecyclerView.ViewHolder {
 
-        static BarcodeFieldViewHolder create(ViewGroup parent) {
+        static BarcodeFieldViewHolder create(ViewGroup parent, Context context) {
             View view =
                     LayoutInflater.from(parent.getContext()).inflate(R.layout.barcode_field, parent, false);
+
+            view.setOnClickListener(new View.OnClickListener(){
+
+                @Override
+                public void onClick(View v) {
+                    Log.d(TAG, "*****BarcodeFieldAdpaterClicked");
+                    MainActivity mainActivity = (MainActivity)context;
+                    mainActivity.productCrawlEngine.crawl();
+                }
+            });
             return new BarcodeFieldViewHolder(view);
         }
 
@@ -41,15 +56,17 @@ class BarcodeFieldAdapter extends RecyclerView.Adapter<BarcodeFieldViewHolder> {
     }
 
     private final List<BarcodeField> barcodeFieldList;
+    public Context context;
 
-    BarcodeFieldAdapter(List<BarcodeField> barcodeFieldList) {
+    BarcodeFieldAdapter(List<BarcodeField> barcodeFieldList, Context context) {
         this.barcodeFieldList = barcodeFieldList;
+        this.context = context;
     }
 
     @Override
     @NonNull
     public BarcodeFieldViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        return BarcodeFieldViewHolder.create(parent);
+        return BarcodeFieldViewHolder.create(parent, context);
     }
 
     @Override
@@ -61,4 +78,5 @@ class BarcodeFieldAdapter extends RecyclerView.Adapter<BarcodeFieldViewHolder> {
     public int getItemCount() {
         return barcodeFieldList.size();
     }
+
 }

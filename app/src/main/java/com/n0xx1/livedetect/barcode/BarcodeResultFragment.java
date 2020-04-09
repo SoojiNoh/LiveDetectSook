@@ -22,13 +22,15 @@ import com.n0xx1.livedetect.camera.WorkflowModel.WorkflowState;
 import java.util.ArrayList;
 
 /** Displays the bottom sheet to present barcode fields contained in the detected barcode. */
-public class BarcodeResultFragment extends BottomSheetDialogFragment {
+public class BarcodeResultFragment extends BottomSheetDialogFragment{
 
     private static final String TAG = "BarcodeResultFragment";
     private static final String ARG_BARCODE_FIELD_LIST = "arg_barcode_field_list";
 
+    RecyclerView fieldRecyclerView;
+
     public static void show(
-            FragmentManager fragmentManager, ArrayList<BarcodeField> barcodeFieldArrayList) {
+            FragmentManager fragmentManager, ArrayList<BarcodeField> barcodeFieldArrayList, ProductCrawlEngine productCrawlEngine) {
         BarcodeResultFragment barcodeResultFragment = new BarcodeResultFragment();
         Bundle bundle = new Bundle();
         bundle.putParcelableArrayList(ARG_BARCODE_FIELD_LIST, barcodeFieldArrayList);
@@ -44,6 +46,7 @@ public class BarcodeResultFragment extends BottomSheetDialogFragment {
         }
     }
 
+
     @Nullable
     @Override
     public View onCreateView(
@@ -52,7 +55,9 @@ public class BarcodeResultFragment extends BottomSheetDialogFragment {
             @Nullable Bundle bundle) {
         View view = layoutInflater.inflate(R.layout.barcode_bottom_sheet, viewGroup);
         ArrayList<BarcodeField> barcodeFieldList;
+        ProductCrawlEngine productCrawlEngine;
         Bundle arguments = getArguments();
+
         if (arguments != null && arguments.containsKey(ARG_BARCODE_FIELD_LIST)) {
             barcodeFieldList = arguments.getParcelableArrayList(ARG_BARCODE_FIELD_LIST);
         } else {
@@ -60,10 +65,14 @@ public class BarcodeResultFragment extends BottomSheetDialogFragment {
             barcodeFieldList = new ArrayList<>();
         }
 
-        RecyclerView fieldRecyclerView = view.findViewById(R.id.barcode_field_recycler_view);
+
+
+        String strtext = getArguments().getString("edttext");
+
+        fieldRecyclerView = view.findViewById(R.id.barcode_field_recycler_view);
         fieldRecyclerView.setHasFixedSize(true);
         fieldRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        fieldRecyclerView.setAdapter(new BarcodeFieldAdapter(barcodeFieldList));
+        fieldRecyclerView.setAdapter(new BarcodeFieldAdapter(barcodeFieldList, getActivity()));
 
         return view;
     }
@@ -78,4 +87,7 @@ public class BarcodeResultFragment extends BottomSheetDialogFragment {
         }
         super.onDismiss(dialogInterface);
     }
+
+
+
 }

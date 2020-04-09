@@ -21,7 +21,7 @@ public class BarcodeCrawlEngine {
     private String htmlPageUrl;
 //    private String htmlContentInStringFormat="";
 
-    private String barcode;
+    private String barcodeValue;
     private String title;
     private String description;
     private ProductCrawlEngine productCrawlEngine;
@@ -29,7 +29,7 @@ public class BarcodeCrawlEngine {
     public BarcodeCrawlEngine(WorkflowModel workflowModel, String barcode){
 
         this.workflowModel = workflowModel;
-        this.barcode = barcode;
+        this.barcodeValue = barcode;
         htmlPageUrl = "http://www.koreannet.or.kr/home/hpisSrchGtin.gs1?gtin="+barcode;
 
         JsoupAsyncTask jsoupAsyncTask = new JsoupAsyncTask();
@@ -59,9 +59,8 @@ public class BarcodeCrawlEngine {
 
         @Override
         protected void onPostExecute(Void result) {
-            BarcodedEntity barcodedEntity = new BarcodedEntity(title, barcode, description);
-            workflowModel.barcodedEntity.setValue(barcodedEntity);
-            ProductCrawlEngine productCrawlEngine = new ProductCrawlEngine(workflowModel, barcodedEntity);
+            Barcode barcode = new Barcode(title, barcodeValue, description);
+            workflowModel.barcode.setValue(barcode);
         }
 
         private void crawl(){

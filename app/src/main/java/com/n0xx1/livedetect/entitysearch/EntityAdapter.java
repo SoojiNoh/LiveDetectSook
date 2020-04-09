@@ -1,4 +1,4 @@
-package com.n0xx1.livedetect.productsearch;
+package com.n0xx1.livedetect.entitysearch;
 
 import android.app.Activity;
 import android.text.TextUtils;
@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerView.Adapter;
 
 import com.n0xx1.livedetect.R;
-import com.n0xx1.livedetect.productsearch.EntityAdapter.EntityViewHolder;
+import com.n0xx1.livedetect.entitysearch.EntityAdapter.EntityViewHolder;
 import com.n0xx1.livedetect.text2speech.Text2Speech;
 
 import java.util.List;

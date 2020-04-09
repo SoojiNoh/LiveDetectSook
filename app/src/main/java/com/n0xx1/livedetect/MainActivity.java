@@ -17,7 +17,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -30,9 +29,13 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import com.n0xx1.livedetect.barcode.Barcode;
 import com.n0xx1.livedetect.barcode.BarcodeField;
 import com.n0xx1.livedetect.barcode.BarcodeProcessor;
 import com.n0xx1.livedetect.barcode.BarcodeResultFragment;
+import com.n0xx1.livedetect.barcode.BarcodedEntity;
+import com.n0xx1.livedetect.barcode.BarcodedProductAdapter;
+import com.n0xx1.livedetect.barcode.ProductCrawlEngine;
 import com.n0xx1.livedetect.camera.CameraSource;
 import com.n0xx1.livedetect.camera.CameraSourcePreview;
 import com.n0xx1.livedetect.camera.FrameProcessor;
@@ -41,11 +44,11 @@ import com.n0xx1.livedetect.camera.WorkflowModel;
 import com.n0xx1.livedetect.camera.WorkflowModel.WorkflowState;
 import com.n0xx1.livedetect.entitydetection.MultiEntityProcessor;
 import com.n0xx1.livedetect.entitydetection.ProminentEntityProcessor;
-import com.n0xx1.livedetect.productsearch.BottomSheetScrimView;
-import com.n0xx1.livedetect.productsearch.Entity;
-import com.n0xx1.livedetect.productsearch.EntityAdapter;
-import com.n0xx1.livedetect.productsearch.SearchEngine;
-import com.n0xx1.livedetect.productsearch.SearchedEntity;
+import com.n0xx1.livedetect.entitysearch.BottomSheetScrimView;
+import com.n0xx1.livedetect.entitysearch.Entity;
+import com.n0xx1.livedetect.entitysearch.EntityAdapter;
+import com.n0xx1.livedetect.entitysearch.SearchEngine;
+import com.n0xx1.livedetect.entitysearch.SearchedEntity;
 import com.n0xx1.livedetect.settings.PreferenceUtils;
 import com.n0xx1.livedetect.settings.SettingsActivity;
 import com.n0xx1.livedetect.staticdetection.Label;
@@ -61,7 +64,6 @@ import com.n0xx1.livedetect.textdetection.TextRecognitionProcessor;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TreeMap;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -97,10 +99,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private WorkflowModel workflowModel;
     private WorkflowState currentWorkflowState;
     private SearchEngine searchEngine;
+    public ProductCrawlEngine productCrawlEngine;
     private Chip bottomPromptChip;
     private RecyclerView previewCardCarousel;
     private ViewGroup dotViewContainer;
     private int dotViewSize;
+    private int currentSelectedObjectIndex = 0;
 
     private BottomSheetBehavior<View> bottomSheetBehavior;
     private BottomSheetScrimView bottomSheetScrimView;
@@ -111,7 +115,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ImageView expandedImageView;
     private boolean slidingSheetUpFromHiddenState;
 
-    private final TreeMap<Integer, SearchedEntity> searchedEntityMap = new TreeMap<>();
+    private Barcode barcode;
+    private BarcodedEntity BarcodedProductsForBottomSheet;
 
     public Text2Speech tts;
 
@@ -174,10 +179,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 float touchX = event.getX();
                 float touchY = event.getY();
-                Log.i(TAG, "Touching down!");
+
 //                for(Rect rect : rectangles){
                     if(thumbnailRect.contains(touchX, touchY)){
-                        Log.i(TAG, "Touched Rectangle, start activity!");
                         bottomSheetScrimView.zoomInImageFromThumb(expandedImageView, entityThumbnailForZoomView);
                     } else {
                         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
@@ -190,6 +194,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         setUpWorkflowModel();
         workflowModel.mainActivity = this;
+        workflowModel.resources = graphicOverlay.getResources();
 
         staticConfirmationController = new StaticConfirmationController(graphicOverlay, workflowModel, getApplicationContext());
         multiEntityProcessor = new MultiEntityProcessor(graphicOverlay, workflowModel, staticConfirmationController);
@@ -239,38 +244,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-//    @Override
-//    public boolean onTouch(View v, MotionEvent event){
-//
-//        Log.i(TAG, "*****onTouch");
-//
-//        RectF thumbnailRect = bottomSheetScrimView.getThumbnailRect();
-//
-//        float touchX = event.getX();
-//        float touchY = event.getY();
-//
-//        switch(event.getAction()){
-//            case MotionEvent.ACTION_DOWN:
-//                Log.i(TAG, "Touching down!");
-////                for(Rect rect : rectangles){
-//                    if(thumbnailRect.contains(touchX, touchY)){
-//                        Log.i(TAG, "Touched Rectangle, start activity!");
-//                        bottomSheetScrimView.zoomInImageFromThumb(expandedImageView, entityThumbnailForZoomView);
-//                    }
-////                }
-//                break;
-//            case MotionEvent.ACTION_UP:
-//                System.out.println("Touching up!");
-//                break;
-//            case MotionEvent.ACTION_MOVE:
-//                System.out.println("Sliding your finger around on the screen!");
-//                break;
-//        }
-//
-//        return true;
-//
-//    }
-
     @Override
     public void onClick(View view) {
         int id = view.getId();
@@ -306,8 +279,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 barcodeButton.setSelected(false);
                 setProcessor(TEXT_MODE);
                 tts.speech("text mode");
-                Toast.makeText(getApplicationContext(),
-                        "text detection mode", Toast.LENGTH_SHORT).show();
             }
         } else if (id == R.id.barcode_button) {
             if (barcodeButton.isSelected() && !textButton.isSelected()) {
@@ -318,10 +289,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 textButton.setSelected(false);
                 setProcessor(BARCODE_MODE);
                 tts.speech("barcode mode");
-                Toast.makeText(getApplicationContext(),
-                        "barcode detection mode", Toast.LENGTH_SHORT).show();
             }
+        } else if (id == R.id.barcode_button){
+            ProductCrawlEngine productCrawlEngine = new ProductCrawlEngine(workflowModel, barcode);
         }
+
+        Log.i(TAG, "****onClicked: "+getResources().getResourceName(view.getId()));
     }
 
 
@@ -465,22 +438,43 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 });
 
+        workflowModel.barcode.observe(
+                this,
+                    barcode -> {
+                    if (barcode != null) {
+                        this.barcode = barcode;
+                        ArrayList<BarcodeField> barcodeFieldList = new ArrayList<>();
+                        String productName = barcode.getName();
+                        if (productName != null) {
+                            barcodeFieldList.add(new BarcodeField("상품명", productName));
+                            tts.speech("상품을 찾았습니다. 상품명은"+productName+"입니다. 검색하시려면 하단 버튼을 눌러주세요.");
+                        }
+                        else{
+                            barcodeFieldList.add(new BarcodeField("상품명", "찾을 수 없음."));
+                            tts.speech("상품을 찾을 수 없습니다.");
+                        }
+                        productCrawlEngine = new ProductCrawlEngine(workflowModel, barcode);
+                        BarcodeResultFragment.show(getSupportFragmentManager(), barcodeFieldList, productCrawlEngine);
+                    }
+
+                });
+
         workflowModel.barcodedEntity.observe(
                 this,
                 barcodedEntity -> {
-
-                    if (barcodedEntity != null) {
-                        ArrayList<BarcodeField> barcodeFieldList = new ArrayList<>();
-                        barcodeFieldList.add(new BarcodeField("Result", barcodedEntity.getName()));
-                        BarcodeResultFragment.show(getSupportFragmentManager(), barcodeFieldList);
-                    }
-                });
-
-        workflowModel.barcodedProducts.observe(
-                this,
-                barcodedProducts -> {
-                    if (!barcodedProducts.getEntityList().isEmpty()) {
-
+                    if (!barcodedEntity.getBarcodedProducts().isEmpty()) {
+                        BarcodeResultFragment.dismiss(getSupportFragmentManager());
+//                        List<BarcodedProduct> productList = barcodedProducts;
+//                        entityThumbnailForBottomSheet = barcodedEntity.getEntityThumbnail();
+                        bottomSheetTitleView.setText(
+                                getResources()
+                                        .getQuantityString(
+                                                R.plurals.bottom_sheet_title, barcodedEntity.getBarcodedProducts().size(), barcodedEntity.getBarcodedProducts().size()));
+                        productRecyclerView.setAdapter(new BarcodedProductAdapter(barcodedEntity.getBarcodedProducts()));
+                        slidingSheetUpFromHiddenState = true;
+                        bottomSheetBehavior.setPeekHeight(preview.getHeight() / 2);
+                        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+                        workflowModel.setWorkflowState(WorkflowState.DETECTED);
                     }
                 }
         );
@@ -666,8 +660,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             setProcessor(PROMI_MODE);
 
         tts.speech("object mode");
-        Toast.makeText(getApplicationContext(),
-                "entity detection mode", Toast.LENGTH_SHORT).show();
     }
 
     private void setProcessor(int i){
@@ -699,6 +691,42 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         cameraSource.setFrameProcessor(frameProcessor);
 
     }
+
+//    @Override
+//    public void onPreviewCardClicked(BarcodedEntity barcodedEntity) {
+//        showSearchResults(barcodedEntity);
+//    }
+
+//    private void showSearchResults(BarcodedEntity barcodedEntity) {
+//        BarcodedProductsForBottomSheet = barcodedEntity;
+//        List<BarcodedEntity> productList = barcodedEntity;
+//        bottomSheetTitleView.setText(
+//                getResources()
+//                        .getQuantityString(
+//                                R.plurals.bottom_sheet_title, productList.size(), productList.size()));
+//        productRecyclerView.setAdapter(new ProductAdapter(productList));
+//        bottomSheetBehavior.setPeekHeight(((View) inputImageView.getParent()).getHeight() / 2);
+//        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+//    }
+
+//    private void selectNewObject(int objectIndex) {
+//        StaticObjectDotView dotViewToDeselect =
+//                (StaticObjectDotView) dotViewContainer.getChildAt(currentSelectedObjectIndex);
+//        dotViewToDeselect.playAnimationWithSelectedState(false);
+//
+//        currentSelectedObjectIndex = objectIndex;
+//
+//        StaticObjectDotView selectedDotView =
+//                (StaticObjectDotView) dotViewContainer.getChildAt(currentSelectedObjectIndex);
+//        selectedDotView.playAnimationWithSelectedState(true);
+//    }
+
+    private void showBottomPromptChip(String message) {
+        bottomPromptChip.setVisibility(View.VISIBLE);
+        bottomPromptChip.setText(message);
+    }
+
+
 
     private static class CardItemDecoration extends RecyclerView.ItemDecoration {
 

@@ -128,7 +128,7 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
                     @Override
                     public void onFinish() {
                         progress = 1;
-                        workflowModel.mainActivity.tts.speech((mainActivity.CURRENT_MODE == mainActivity.TEXT_MODE)? "텍스트를" : "오브젝트를" + "분석중 입니다.");
+                        workflowModel.mainActivity.tts.speech(((mainActivity.CURRENT_MODE == mainActivity.TEXT_MODE)? "텍스트를" : "오브젝트를")+ "분석중 입니다.");
                     }
                 };
 

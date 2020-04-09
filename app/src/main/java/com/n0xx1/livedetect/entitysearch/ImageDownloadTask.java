@@ -1,4 +1,4 @@
-package com.n0xx1.livedetect.productsearch;
+package com.n0xx1.livedetect.entitysearch;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;

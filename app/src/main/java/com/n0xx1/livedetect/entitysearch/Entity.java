@@ -1,4 +1,4 @@
-package com.n0xx1.livedetect.productsearch;
+package com.n0xx1.livedetect.entitysearch;
 
 public class Entity {
 

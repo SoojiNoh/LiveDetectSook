@@ -35,6 +35,8 @@ public class ProminentEntityProcessor extends FrameProcessorBase<List<FirebaseVi
     private final CameraReticleAnimator cameraReticleAnimator;
     private final int reticleOuterRingRadius;
 
+    private int trackingId;
+
 
     private final StaticConfirmationController staticConfirmationController;
 
