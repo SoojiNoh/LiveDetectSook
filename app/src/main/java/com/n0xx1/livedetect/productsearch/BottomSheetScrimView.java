@@ -14,7 +14,6 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
@@ -45,6 +44,9 @@ public class BottomSheetScrimView extends View{
     public BottomSheetScrimView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
+        this.setClickable(true);
+        this.setFocusable(true);
+
         Resources resources = context.getResources();
         scrimPaint = new Paint();
         scrimPaint.setColor(ContextCompat.getColor(context, R.color.dark));
@@ -60,11 +62,17 @@ public class BottomSheetScrimView extends View{
         thumbnailHeight = resources.getDimensionPixelOffset(R.dimen.entity_thumbnail_height);
         thumbnailMargin = resources.getDimensionPixelOffset(R.dimen.entity_thumbnail_margin);
         boxCornerRadius = resources.getDimensionPixelOffset(R.dimen.bounding_box_corner_radius);
+
+    }
+
+    public RectF getThumbnailRect(){
+        return thumbnailRect;
     }
     /**
      * Translates the entity thumbnail up or down along with bottom sheet's sliding movement, with
      * keeping thumbnail size fixed.
      */
+
     public void updateWithThumbnailTranslate(
             Bitmap thumbnailBitmap, int collapsedStateHeight, float slideOffset, View bottomSheet) {
         this.thumbnailBitmap = thumbnailBitmap;
@@ -158,7 +166,7 @@ public class BottomSheetScrimView extends View{
 
 
 
-    public void zoomImageFromThumb(ImageView imageView, Bitmap image) {
+    public void zoomInImageFromThumb(ImageView imageView, Bitmap image) {
 
         View thumbView = this;
 

@@ -11,6 +11,7 @@ import android.graphics.RectF;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -163,6 +164,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tts = new Text2Speech(getApplicationContext(), this);
         searchEngine = new SearchEngine(getApplicationContext(), this);
 
+        bottomSheetScrimView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_DOWN){
+                    RectF thumbnailRect = bottomSheetScrimView.getThumbnailRect();
+
+                float touchX = event.getX();
+                float touchY = event.getY();
+                Log.i(TAG, "Touching down!");
+//                for(Rect rect : rectangles){
+                    if(thumbnailRect.contains(touchX, touchY)){
+                        Log.i(TAG, "Touched Rectangle, start activity!");
+                        bottomSheetScrimView.zoomInImageFromThumb(expandedImageView, entityThumbnailForZoomView);
+                    } else {
+                        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+                    }
+//                }
+                }
+                return true;
+            }
+        });
+
         setUpWorkflowModel();
 
         staticConfirmationController = new StaticConfirmationController(graphicOverlay, workflowModel, getApplicationContext());
@@ -213,16 +236,47 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+//    @Override
+//    public boolean onTouch(View v, MotionEvent event){
+//
+//        Log.i(TAG, "*****onTouch");
+//
+//        RectF thumbnailRect = bottomSheetScrimView.getThumbnailRect();
+//
+//        float touchX = event.getX();
+//        float touchY = event.getY();
+//
+//        switch(event.getAction()){
+//            case MotionEvent.ACTION_DOWN:
+//                Log.i(TAG, "Touching down!");
+////                for(Rect rect : rectangles){
+//                    if(thumbnailRect.contains(touchX, touchY)){
+//                        Log.i(TAG, "Touched Rectangle, start activity!");
+//                        bottomSheetScrimView.zoomInImageFromThumb(expandedImageView, entityThumbnailForZoomView);
+//                    }
+////                }
+//                break;
+//            case MotionEvent.ACTION_UP:
+//                System.out.println("Touching up!");
+//                break;
+//            case MotionEvent.ACTION_MOVE:
+//                System.out.println("Sliding your finger around on the screen!");
+//                break;
+//        }
+//
+//        return true;
+//
+//    }
+
     @Override
     public void onClick(View view) {
         int id = view.getId();
         if (id == R.id.product_search_button) {
             searchButton.setEnabled(false);
             workflowModel.onSearchButtonClicked();
+//        } else if (id == R.id.bottom_sheet_scrim_view) {
+//            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
 
-        } else if (id == R.id.bottom_sheet_scrim_view) {
-            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-//            bottomSheetScrimView.zoomImageFromThumb(expandedImageView, entityThumbnailForZoomView);
         } else if (id == R.id.close_button) {
             onBackPressed();
 
