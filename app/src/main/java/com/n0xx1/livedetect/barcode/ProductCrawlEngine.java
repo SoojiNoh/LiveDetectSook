@@ -1,6 +1,7 @@
 package com.n0xx1.livedetect.barcode;
 
 import android.os.AsyncTask;
+import android.util.Log;
 
 import com.n0xx1.livedetect.camera.WorkflowModel;
 
@@ -30,8 +31,9 @@ public class ProductCrawlEngine {
         this.workflowModel = workflowModel;
         this.barcode = barcode;
 
-        htmlPageUrl="https://search.shopping.naver.com/search/all.nhn?query="+barcode.getName()+"&cat_id=&frm=NVSHATC";
+        htmlPageUrl="https://search.shopping.naver.com/search/all.nhn?origQuery="+barcode.getName()+"pagingIndex=1&pagingSize=40&viewType=list&sort=price_asc&frm=NVSHATC&query="+barcode.getName();
 
+        Log.i(TAG, "*****"+htmlPageUrl);
 
         jsoupAsyncTask = new JsoupAsyncTask();
 
@@ -73,13 +75,12 @@ public class ProductCrawlEngine {
 
                 Document doc = Jsoup.connect(htmlPageUrl).get();
 
-
-                for (int i=1 ; i<=5 ; i++){
+                for (int i=1 ; i<=doc.select("ul[class=goods_list]").size() ; i++){
                     title = doc.select("li[data-expose-rank="+i+"] div[class=tit]").text();
-                    price = doc.select("li[data-expose-rank="+i+"] span[class=price] em").text().replaceAll("[^0-9]", "");;
-                    imgUrl = doc.select("li[data-expose-rank="+i+"] img[class=_productLazyImg]").attr("src");
+                    price = doc.select("li[data-expose-rank="+i+"] span[class=price] em").text().replaceAll("[^0-9]", "");
+                    imgUrl = doc.select("li[data-expose-rank="+i+"] img[class=_productLazyImg]").attr("data-original");
                     siteUrl = doc.select("li[data-expose-rank="+i+"] div[class=tit] a").text();
-                    listProduct.add(new BarcodedProduct(title, Integer.parseInt(price), imgUrl, siteUrl));
+                    listProduct.add(new BarcodedProduct(title, price, imgUrl, siteUrl));
                 }
 
 

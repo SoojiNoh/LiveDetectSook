@@ -109,6 +109,7 @@ public class BarcodeProcessor extends FrameProcessorBase<List<FirebaseVisionBarc
                         workflowModel.setWorkflowState(WorkflowState.SEARCHED);
                         workflowModel.detectedBarcode.setValue(barcode);
                         BarcodeCrawlEngine crawlEngine = new BarcodeCrawlEngine(workflowModel,barcode.getRawValue());
+                        crawlEngine.crawl();
                     } else {
                         graphicOverlay.invalidate();
                     }

@@ -44,7 +44,7 @@ public class LabelAdapter extends RecyclerView.Adapter<TextViewHolder> {
 
         void bindLabel(Label label) {
 //            imageView.setImageDrawable(null);
-//            if (!LabelUtils.isEmpty(label.imageUrl)) {
+//            if (!TextUtils.isEmpty(label.imageUrl)) {
 //                new ImageDownloadTask(imageView, imageSize).execute(label.imageUrl);
 //            } else {
 //                imageView.setImageResource(R.drawable.logo_google_cloud);

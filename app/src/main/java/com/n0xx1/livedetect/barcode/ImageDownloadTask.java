@@ -33,6 +33,7 @@ class ImageDownloadTask extends AsyncTask<String, Void, Bitmap> {
 
         Bitmap bitmap = null;
         try {
+            Log.i(TAG, "******DownloadingImage: "+urls[0]);
             InputStream inputStream = new URL(urls[0]).openStream();
             bitmap = BitmapFactory.decodeStream(inputStream);
             inputStream.close();

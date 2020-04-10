@@ -50,7 +50,7 @@ public class BarcodedProductAdapter extends RecyclerView.Adapter<BarcodedProduct
                     imageView.setImageResource(R.drawable.logo_google_cloud);
                 }
                 titleView.setText(barcodedProduct.name);
-                subtitleView.setText(Integer.toString(barcodedProduct.price)+"원");
+                subtitleView.setText(barcodedProduct.price+"원");
             }
         }
 

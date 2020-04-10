@@ -174,7 +174,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         bottomSheetScrimView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                if (event.getAction() == MotionEvent.ACTION_DOWN){
+                if (event.getAction() == MotionEvent.ACTION_DOWN && CURRENT_MODE != BARCODE_MODE){
                     RectF thumbnailRect = bottomSheetScrimView.getThumbnailRect();
 
                 float touchX = event.getX();
@@ -290,8 +290,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 setProcessor(BARCODE_MODE);
                 tts.speech("barcode mode");
             }
-        } else if (id == R.id.barcode_button){
-            ProductCrawlEngine productCrawlEngine = new ProductCrawlEngine(workflowModel, barcode);
         }
 
         Log.i(TAG, "****onClicked: "+getResources().getResourceName(view.getId()));
