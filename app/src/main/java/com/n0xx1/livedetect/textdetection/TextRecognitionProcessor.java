@@ -42,6 +42,23 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
     String text;
 
     boolean hasFoundText = false;
+    boolean hasFoundBestBefore = false;
+    String[] bestBefore = new String[3];
+    boolean hasFoundMainText = false;
+    String mainText;
+    String[] BEST_BEFORE_REGEXES_PRE = {
+            "^[0-3]?[0-9][^0-9][0-3]?[0-9][^0-9](?:[0-9]{2})?[0-9]{2}$",
+            "^[0-3][0-9][^0-9][0-3][0-9][^0-9](?:[0-9][0-9])?[0-9][0-9]$",
+            "^(1[0-2]|0[1-9])[^0-9](3[01]|[12][0-9]|0[1-9])[^0-9][0-9]{4}$",
+            "^(3[01]|[12][0-9]|0[1-9])[^0-9](1[0-2]|0[1-9])[^0-9][0-9]{4}$",
+    };
+    String[] BEST_BEFORE_REGEXES_POST = {
+            "^(?:[0-9]{2})?[0-9]{2}[^0-9][0-3]?[0-9][^0-9][0-3]?[0-9]$",
+            "^(?:[0-9][0-9])?[0-9][0-9][^0-9][0-3][0-9][^0-9][0-3][0-9]$",
+            "^[0-9]{4}[^0-9](3[01]|[12][0-9]|0[1-9])[^0-9](1[0-2]|0[1-9])$",
+            "^[0-9]{4}[^0-9](1[0-2]|0[1-9])[^0-9](3[01]|[12][0-9]|0[1-9])$",
+    };
+
     Text2Speech tts;
 
     public TextRecognitionProcessor(GraphicOverlay graphicOverlay, WorkflowModel workflowModel, StaticConfirmationController staticConfirmationController) {
@@ -61,6 +78,7 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
         if (PreferenceUtils.isClassificationEnabled(graphicOverlay.getContext())) {
             optionsBuilder.enableClassification();
         }
+
 
         this.detector = FirebaseVision.getInstance().getOnDeviceTextRecognizer();
 
@@ -109,8 +127,26 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
             for (int j = 0; j < lines.size(); j++) {
                 List<FirebaseVisionText.Element> elements = lines.get(j).getElements();
                 for (int k = 0; k < elements.size(); k++) {
-                    Graphic textGraphic = new TextGraphic(graphicOverlay, elements.get(k));
+                    FirebaseVisionText.Element element = elements.get(k);
+                    for(String regex : BEST_BEFORE_REGEXES_PRE){
+                        if (element.getText().matches(regex)) {
+                            Log.i(TAG, "bestBeforeFound: ");
+                            bestBefore = element.getText().split("[^0-9]");
+                            alertBestBeforeFound(bestBefore[2],bestBefore[1],bestBefore[0]);
+                        }
+                    }
 
+                    for(String regex : BEST_BEFORE_REGEXES_POST){
+                        if (element.getText().matches(regex)) {
+                            Log.i(TAG, "bestBeforeFound: ");
+                            bestBefore = element.getText().split("[^0-9]");
+                            alertBestBeforeFound(bestBefore[0],bestBefore[1],bestBefore[2]);
+                        }
+                    }
+                    if (element.getBoundingBox().width()*element.getBoundingBox().height()>6500)
+                        alertMainTextFound();
+//                        Log.i(TAG, "******textAreaSize: "+element.getBoundingBox().width()*element.getBoundingBox().height());
+                    Graphic textGraphic = new TextGraphic(graphicOverlay, element);
                     graphicOverlay.add(textGraphic);
 
                 }
@@ -125,10 +161,28 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
 
 
     public void alertTextFound(){
-        if (hasFoundText == false) {
+        if (!hasFoundText) {
             hasFoundText = true;
             tts.speech("텍스트 발견. 조사하시려면 화면을 길게 눌러주세요");
         }
+    }
+
+    public void alertBestBeforeFound(String year, String month, String day){
+        if (!hasFoundBestBefore) {
+            hasFoundBestBefore = true;
+            tts.speech("유통기한 발견. 해당 상품의 유통기한은"+year+"년"+month+"월"+day+"일"+"입니다.");
+        }
+    }
+
+    public void alertMainTextFound(){
+        if (!hasFoundMainText) {
+            hasFoundMainText = true;
+            tts.speech(mainText);
+        }
+    }
+
+    public void resetFounds(){
+
     }
 
 }
