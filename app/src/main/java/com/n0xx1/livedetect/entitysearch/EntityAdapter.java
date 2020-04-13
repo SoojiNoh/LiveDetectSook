@@ -49,7 +49,7 @@ public class EntityAdapter extends Adapter<EntityViewHolder>{
             if (!TextUtils.isEmpty(product.imageUrl)) {
                 new ImageDownloadTask(imageView, imageSize).execute(product.imageUrl);
             } else {
-                imageView.setImageResource(R.drawable.logo_google_cloud);
+                imageView.setImageResource(R.drawable.logo_marketsee);
             }
             titleView.setText(product.title);
             subtitleView.setText(product.subtitle);

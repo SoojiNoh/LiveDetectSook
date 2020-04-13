@@ -64,9 +64,9 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
     private LinkedList<Element> mainTextBuffer = new LinkedList<Element>();
 
     int TEXT_DELAY = 0;
-    int TEXT_INTERVAL = 50;
+    int TEXT_INTERVAL = 100;
     int MAIN_DELAY = 5;
-    int MAIN_INTERVAL = 10;
+    int MAIN_INTERVAL = 3;
     int BESTBEFORE_DELAY = 5;
     int BESTBEFORE_INTERVAL = 10;
 
@@ -108,8 +108,8 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
         textService.scheduleAtFixedRate(resetTextFoundTimer, TEXT_DELAY, TEXT_INTERVAL, TimeUnit.SECONDS);
         textService.scheduleAtFixedRate(resetBestBeforeFoundTimer, BESTBEFORE_DELAY, BESTBEFORE_INTERVAL, TimeUnit.SECONDS);
         textService.scheduleAtFixedRate(resetMainTextFoundTimer, MAIN_DELAY, MAIN_INTERVAL, TimeUnit.SECONDS);
-        textService.scheduleAtFixedRate(sortTextScale, 0, 1, TimeUnit.SECONDS);
-        ttsService.scheduleAtFixedRate(processBuffer, 5, 1, TimeUnit.SECONDS);
+        textService.scheduleAtFixedRate(sortTextScale, 0, 2, TimeUnit.SECONDS);
+        textService.scheduleAtFixedRate(processBuffer, 0, 1, TimeUnit.SECONDS);
 
         tts = new Text2Speech(workflowModel.getApplication().getApplicationContext(), workflowModel.mainActivity);
     }
@@ -162,14 +162,14 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
 
 
                     for (String regex : BEST_BEFORE_REGEXES_KO ) {
-                        if (element.getText().matches(regex) && workflowModel.isTtsAvailable() && !hasFoundBestBefore) {
+                        if (element.getText().matches(regex) && workflowModel.isTtsAvailable() && !hasFoundBestBefore && textScale > 1000) {
                             bestBefore = element.getText().split("[^0-9]");
                             alertBestBeforeFoundKo(bestBefore[0], bestBefore[1], bestBefore[2]);
                             continue;
                         }
                     }
 
-                    if (textScale > 40000 && !hasFoundMainText) {
+                    if (textScale > 10000 && !hasFoundMainText) {
                         Log.i(TAG, "***textScale: " + textScale);
                         textScaleMap.put(textScale, element);
                         hasFoundMainText=true;
@@ -248,7 +248,7 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
         public void run() {
 
             Log.i(TAG, "*****processingBufferStart: "+workflowModel.getTtsAvailable());
-            if (workflowModel.getTtsAvailable()) {
+            if (workflowModel.getTtsAvailable() && !workflowModel.ttsBuffer.isEmpty()) {
                 String message = workflowModel.ttsBuffer.removeFirst();
                 Log.i(TAG, "*****processingBuffer: "+message);
                 tts.speech(message.toLowerCase());

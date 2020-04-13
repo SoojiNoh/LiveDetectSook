@@ -222,7 +222,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onPause() {
         super.onPause();
         currentWorkflowState = WorkflowState.NOT_STARTED;
-        stopCameraPreview();
+//        stopCameraPreview();
     }
 
     @Override

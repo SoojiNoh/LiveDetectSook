@@ -47,7 +47,7 @@ public class BarcodedProductAdapter extends RecyclerView.Adapter<BarcodedProduct
                 if (!TextUtils.isEmpty(barcodedProduct.imageUrl)) {
                     new ImageDownloadTask(imageView, imageSize).execute(barcodedProduct.imageUrl);
                 } else {
-                    imageView.setImageResource(R.drawable.logo_google_cloud);
+                    imageView.setImageResource(R.drawable.logo_marketsee);
                 }
                 titleView.setText(barcodedProduct.name);
                 subtitleView.setText(barcodedProduct.price+"원");
