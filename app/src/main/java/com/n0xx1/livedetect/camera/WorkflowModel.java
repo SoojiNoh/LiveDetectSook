@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.util.Log;
 
 import androidx.annotation.MainThread;
 import androidx.annotation.Nullable;
@@ -26,6 +27,7 @@ import com.n0xx1.livedetect.staticdetection.Text;
 import com.n0xx1.livedetect.staticdetection.TextedEntity;
 
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -34,6 +36,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /** View model for handling application workflow based on camera preview. */
 public class WorkflowModel extends AndroidViewModel implements SearchResultListener, StaticResultListener {
 
+    private static String TAG = "WorkflowModel";
     /**
      * State set of the application workflow.
      */
@@ -49,6 +52,8 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
 
     public MainActivity mainActivity;
     public Resources resources;
+    public LinkedList<String> ttsBuffer = new LinkedList<String>();
+
 
     public final MutableLiveData<WorkflowState> workflowState = new MutableLiveData<>();
 
@@ -70,6 +75,7 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
 
     private final Set<Integer> entityIdsToSearch = new HashSet<>();
 
+    private boolean isTtsAvailable = true;
     private boolean isCameraLive = false;
     @Nullable
     private DetectedEntity confirmedEntity;
@@ -128,6 +134,31 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
     public void markCameraLive() {
         isCameraLive = true;
         entityIdsToSearch.clear();
+    }
+
+    public void setTtsAvailable(boolean bool){
+        isTtsAvailable = bool;
+    }
+
+    public boolean getTtsAvailable(){
+        return isTtsAvailable;
+    }
+
+    public void queueBuffer(String message) {
+        if(!ttsBuffer.contains(message)) {
+            ttsBuffer.add(message);
+            printBuffer();
+            Log.i(TAG, "******NewTtsBuffer: "+message);
+        }
+    }
+
+    public void printBuffer(){
+        Log.i(TAG, "******>>"+ ttsBuffer.toString());
+    }
+
+
+    public boolean isTtsAvailable(){
+        return isTtsAvailable;
     }
 
     public void markCameraFrozen() {

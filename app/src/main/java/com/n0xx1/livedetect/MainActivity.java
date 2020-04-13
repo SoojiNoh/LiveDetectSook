@@ -315,7 +315,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             workflowModel.markCameraFrozen();
             flashButton.setSelected(false);
             barcodeButton.setSelected(false);
-            preview.stop();
+//            preview.stop();
         }
     }
 
@@ -433,6 +433,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         slidingSheetUpFromHiddenState = true;
                         bottomSheetBehavior.setPeekHeight(preview.getHeight() / 2);
                         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+
+//                            for(int i=productList.size()-1 ; productList.size()>0 && i>=0 ; i--)
+                                tts.speech(productList.get(0).getTitle()+"");
+//                                    +((Entity)productList.get(1)).getTitle()+""+((Entity)productList.get(2)).getTitle());
                     }
                 });
 
@@ -573,6 +577,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case CONFIRMED:
                 promptChip.setVisibility(View.VISIBLE);
                 promptChip.setText(R.string.prompt_searching);
+                startCameraPreview();
                 stopCameraPreview();
                 break;
             case SEARCHING:
@@ -689,6 +694,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         cameraSource.setFrameProcessor(frameProcessor);
 
     }
+
+    public WorkflowModel getWorkflowModel(){
+        return  workflowModel;
+    }
+
+
 
 //    @Override
 //    public void onPreviewCardClicked(BarcodedEntity barcodedEntity) {

@@ -235,7 +235,7 @@ public class SearchEngine {
 //                List<EntityAnnotation> texts = result.getResponses().get(0).getTextAnnotations();
 
 
-                if (!labels.isEmpty()) {
+                if (labels != null && !labels.isEmpty()) {
                     for (int i = 0; i < labels.size(); i++) {
 
                         EntityAnnotation label = labels.get(i);

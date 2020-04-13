@@ -10,6 +10,7 @@ import com.google.firebase.ml.vision.FirebaseVision;
 import com.google.firebase.ml.vision.common.FirebaseVisionImage;
 import com.google.firebase.ml.vision.objects.FirebaseVisionObjectDetectorOptions;
 import com.google.firebase.ml.vision.text.FirebaseVisionText;
+import com.google.firebase.ml.vision.text.FirebaseVisionText.Element;
 import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
 import com.n0xx1.livedetect.R;
 import com.n0xx1.livedetect.camera.CameraReticleAnimator;
@@ -22,44 +23,67 @@ import com.n0xx1.livedetect.staticdetection.StaticConfirmationController;
 import com.n0xx1.livedetect.text2speech.Text2Speech;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.TreeMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
-public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionText>{
+public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionText> {
 
     private static final String TAG = "TextRecognizeProcessor";
 
+    ScheduledExecutorService textService = Executors.newSingleThreadScheduledExecutor();
+    ScheduledExecutorService ttsService = Executors.newSingleThreadScheduledExecutor();
+
+
+    Text2Speech tts;
     private final FirebaseVisionTextRecognizer detector;
     private final WorkflowModel workflowModel;
     private final GraphicOverlay graphicOverlay;
     private FirebaseVisionImage image;
     private StaticConfirmationController staticConfirmationController;
 
-//    private final StaticConfirmationController confirmationController;
+
     private final CameraReticleAnimator cameraReticleAnimator;
     private final int reticleOuterRingRadius;
 
     List<FirebaseVisionText.TextBlock> blocks;
-    String text;
 
-    boolean hasFoundText = false;
-    boolean hasFoundBestBefore = false;
-    String[] bestBefore = new String[3];
-    boolean hasFoundMainText = false;
-    String mainText;
-    String[] BEST_BEFORE_REGEXES_PRE = {
+    private boolean hasFoundText = false;
+    private boolean hasFoundBestBefore = false;
+    private boolean hasFoundMainText = false;
+    private String[] bestBefore = new String[3];
+    private String mainText;
+    HashMap<Double, Element> textScaleMap =  new HashMap<Double, Element>();
+
+    private LinkedList<Element> mainTextBuffer = new LinkedList<Element>();
+
+    int TEXT_DELAY = 0;
+    int TEXT_INTERVAL = 50;
+    int MAIN_DELAY = 5;
+    int MAIN_INTERVAL = 10;
+    int BESTBEFORE_DELAY = 5;
+    int BESTBEFORE_INTERVAL = 10;
+
+
+    String[] BEST_BEFORE_REGEXES_US = {
             "^[0-3]?[0-9][^0-9][0-3]?[0-9][^0-9](?:[0-9]{2})?[0-9]{2}$",
             "^[0-3][0-9][^0-9][0-3][0-9][^0-9](?:[0-9][0-9])?[0-9][0-9]$",
             "^(1[0-2]|0[1-9])[^0-9](3[01]|[12][0-9]|0[1-9])[^0-9][0-9]{4}$",
             "^(3[01]|[12][0-9]|0[1-9])[^0-9](1[0-2]|0[1-9])[^0-9][0-9]{4}$",
     };
-    String[] BEST_BEFORE_REGEXES_POST = {
+    String[] BEST_BEFORE_REGEXES_KO = {
             "^(?:[0-9]{2})?[0-9]{2}[^0-9][0-3]?[0-9][^0-9][0-3]?[0-9]$",
             "^(?:[0-9][0-9])?[0-9][0-9][^0-9][0-3][0-9][^0-9][0-3][0-9]$",
             "^[0-9]{4}[^0-9](3[01]|[12][0-9]|0[1-9])[^0-9](1[0-2]|0[1-9])$",
             "^[0-9]{4}[^0-9](1[0-2]|0[1-9])[^0-9](3[01]|[12][0-9]|0[1-9])$",
     };
 
-    Text2Speech tts;
 
     public TextRecognitionProcessor(GraphicOverlay graphicOverlay, WorkflowModel workflowModel, StaticConfirmationController staticConfirmationController) {
 
@@ -79,8 +103,13 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
             optionsBuilder.enableClassification();
         }
 
-
         this.detector = FirebaseVision.getInstance().getOnDeviceTextRecognizer();
+
+        textService.scheduleAtFixedRate(resetTextFoundTimer, TEXT_DELAY, TEXT_INTERVAL, TimeUnit.SECONDS);
+        textService.scheduleAtFixedRate(resetBestBeforeFoundTimer, BESTBEFORE_DELAY, BESTBEFORE_INTERVAL, TimeUnit.SECONDS);
+        textService.scheduleAtFixedRate(resetMainTextFoundTimer, MAIN_DELAY, MAIN_INTERVAL, TimeUnit.SECONDS);
+        textService.scheduleAtFixedRate(sortTextScale, 0, 1, TimeUnit.SECONDS);
+        ttsService.scheduleAtFixedRate(processBuffer, 5, 1, TimeUnit.SECONDS);
 
         tts = new Text2Speech(workflowModel.getApplication().getApplicationContext(), workflowModel.mainActivity);
     }
@@ -97,11 +126,9 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
 
     @Override
     protected Task<FirebaseVisionText> detectInImage(FirebaseVisionImage image) {
-//        this.image = image;
         staticConfirmationController.setImage(image.getBitmap());
         return detector.processImage(image);
     }
-
 
 
     @MainThread
@@ -116,40 +143,43 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
         graphicOverlay.add(new TextDotGraphic(graphicOverlay));
 
 
-
 //        List<FirebaseVisionText.TextBlock> blocks = results.getTextBlocks();
         blocks = results.getTextBlocks();
 
-        if (!blocks.isEmpty()) alertTextFound();
 
         for (int i = 0; i < blocks.size(); i++) {
             List<FirebaseVisionText.Line> lines = blocks.get(i).getLines();
             for (int j = 0; j < lines.size(); j++) {
-                List<FirebaseVisionText.Element> elements = lines.get(j).getElements();
+                List<Element> elements = lines.get(j).getElements();
                 for (int k = 0; k < elements.size(); k++) {
-                    FirebaseVisionText.Element element = elements.get(k);
-                    for(String regex : BEST_BEFORE_REGEXES_PRE){
-                        if (element.getText().matches(regex)) {
-                            Log.i(TAG, "bestBeforeFound: ");
+                    Element element = elements.get(k);
+                    double textScale = element.getBoundingBox().width() * element.getBoundingBox().height();
+
+
+                    if (textScale > 1000 && workflowModel.isTtsAvailable() && !hasFoundText) {
+                        alertTextFound();
+                    }
+
+
+                    for (String regex : BEST_BEFORE_REGEXES_KO ) {
+                        if (element.getText().matches(regex) && workflowModel.isTtsAvailable() && !hasFoundBestBefore) {
                             bestBefore = element.getText().split("[^0-9]");
-                            alertBestBeforeFound(bestBefore[2],bestBefore[1],bestBefore[0]);
+                            alertBestBeforeFoundKo(bestBefore[0], bestBefore[1], bestBefore[2]);
+                            continue;
                         }
                     }
 
-                    for(String regex : BEST_BEFORE_REGEXES_POST){
-                        if (element.getText().matches(regex)) {
-                            Log.i(TAG, "bestBeforeFound: ");
-                            bestBefore = element.getText().split("[^0-9]");
-                            alertBestBeforeFound(bestBefore[0],bestBefore[1],bestBefore[2]);
-                        }
+                    if (textScale > 40000 && !hasFoundMainText) {
+                        Log.i(TAG, "***textScale: " + textScale);
+                        textScaleMap.put(textScale, element);
+                        hasFoundMainText=true;
                     }
-                    if (element.getBoundingBox().width()*element.getBoundingBox().height()>6500)
-                        alertMainTextFound();
 //                        Log.i(TAG, "******textAreaSize: "+element.getBoundingBox().width()*element.getBoundingBox().height());
                     Graphic textGraphic = new TextGraphic(graphicOverlay, element);
                     graphicOverlay.add(textGraphic);
 
                 }
+
             }
         }
     }
@@ -160,29 +190,99 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
     }
 
 
-    public void alertTextFound(){
+    Runnable resetTextFoundTimer = new Runnable() {
+        @Override
+        public void run() {
+            if (hasFoundText) {
+                Log.i(TAG, "******textFoundReset");
+                hasFoundText = false;
+            }
+        }
+    };
+
+    Runnable resetMainTextFoundTimer = new Runnable() {
+        @Override
+        public void run() {
+            if (hasFoundMainText) {
+                Log.i(TAG, "******mainTextFoundReset");
+                hasFoundMainText = false;
+            }
+        }
+    };
+
+    Runnable resetBestBeforeFoundTimer = new Runnable() {
+        @Override
+        public void run() {
+            if (hasFoundBestBefore) {
+                Log.i(TAG, "******bestBeforeFoundReset");
+                hasFoundBestBefore = false;
+            }
+        }
+    };
+
+    Runnable sortTextScale = new Runnable() {
+        @Override
+        public void run() {
+            if (!textScaleMap.isEmpty()) {
+                TreeMap<Double, Element> textSortMap = new TreeMap<Double, Element>(textScaleMap);
+                Iterator<Double> iteratorKey = textSortMap.keySet().iterator();
+
+                ArrayList<Element> textSorted = new ArrayList<Element>();
+
+                while (iteratorKey.hasNext()) {
+                    Double key = iteratorKey.next();
+                    textSorted.add(textSortMap.get(key));
+                }
+                Log.i(TAG, "******textSortedSize: " + textSorted.size());
+                for (int l = 0; l < textSorted.size(); l++)
+                    workflowModel.queueBuffer(textSorted.get(l).getText());
+            }
+            textScaleMap =  new HashMap<Double, Element>();
+        }
+    };
+
+
+
+    Runnable processBuffer = new Runnable() {
+        @Override
+        public void run() {
+
+            Log.i(TAG, "*****processingBufferStart: "+workflowModel.getTtsAvailable());
+            if (workflowModel.getTtsAvailable()) {
+                String message = workflowModel.ttsBuffer.removeFirst();
+                Log.i(TAG, "*****processingBuffer: "+message);
+                tts.speech(message.toLowerCase());
+                workflowModel.printBuffer();
+            }
+        }
+    };
+
+
+
+    protected void alertTextFound() {
         if (!hasFoundText) {
             hasFoundText = true;
             tts.speech("텍스트 발견. 조사하시려면 화면을 길게 눌러주세요");
         }
     }
 
-    public void alertBestBeforeFound(String year, String month, String day){
+    protected void alertBestBeforeFoundKo(String year, String month, String day) {
         if (!hasFoundBestBefore) {
             hasFoundBestBefore = true;
-            tts.speech("유통기한 발견. 해당 상품의 유통기한은"+year+"년"+month+"월"+day+"일"+"입니다.");
+            tts.speech("유통기한 발견." + year + "년" + month + "월" + day + "일" + "입니다.");
         }
     }
 
-    public void alertMainTextFound(){
-        if (!hasFoundMainText) {
-            hasFoundMainText = true;
-            tts.speech(mainText);
+    protected void alertBestBeforeFoundUS(String day, String month, String year) {
+        if (!hasFoundBestBefore) {
+            hasFoundBestBefore = true;
+            tts.speech("유통기한 발견." + year + "년" + month + "월" + day + "일" + "입니다.");
         }
     }
 
-    public void resetFounds(){
 
-    }
+
+
 
 }
+

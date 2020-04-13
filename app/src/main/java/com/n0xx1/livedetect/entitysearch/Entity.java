@@ -11,4 +11,9 @@ public class Entity {
         this.title = title;
         this.subtitle = subtitle;
     }
+
+    public String getTitle(){
+        return title;
+    }
+
 }
