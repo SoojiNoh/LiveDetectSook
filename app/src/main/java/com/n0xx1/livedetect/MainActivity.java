@@ -434,8 +434,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         bottomSheetBehavior.setPeekHeight(preview.getHeight() / 2);
                         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
 
-//                            for(int i=productList.size()-1 ; productList.size()>0 && i>=0 ; i--)
-                                tts.speech(productList.get(0).getTitle()+"");
+                        String result="";
+                            for(int i=0 ; i<productList.size(); i++){
+                                result+=productList.get(i).getTitle();
+                                result+="혹은 ";
+                            }
+                                tts.speech(result+"");
 //                                    +((Entity)productList.get(1)).getTitle()+""+((Entity)productList.get(2)).getTitle());
                     }
                 });
@@ -446,10 +450,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     if (barcode != null) {
                         this.barcode = barcode;
                         ArrayList<BarcodeField> barcodeFieldList = new ArrayList<>();
-                        String productName = barcode.getName();
-                        if (productName != null) {
-                            barcodeFieldList.add(new BarcodeField("상품명", productName));
-                            tts.speech("상품을 찾았습니다. 상품명은"+productName+"입니다. 검색하시려면 하단 버튼을 눌러주세요.");
+                        if (barcode.getName() != null) {
+                            barcodeFieldList.add(new BarcodeField("상품명", barcode.getName()));
+                            tts.speech("상품을 찾았습니다. 상품명은"+barcode.getName()+"입니다.");
+                            barcodeFieldList.add(new BarcodeField("상품설명", barcode.getDescription()+""));
                         }
                         else{
                             barcodeFieldList.add(new BarcodeField("상품명", "찾을 수 없음."));
@@ -472,6 +476,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 getResources()
                                         .getQuantityString(
                                                 R.plurals.bottom_sheet_title, barcodedEntity.getBarcodedProducts().size(), barcodedEntity.getBarcodedProducts().size()));
+                        tts.speech("검색결과가 나왔습니다.");
                         productRecyclerView.setAdapter(new BarcodedProductAdapter(barcodedEntity.getBarcodedProducts()));
                         slidingSheetUpFromHiddenState = true;
                         bottomSheetBehavior.setPeekHeight(preview.getHeight() / 2);
@@ -572,11 +577,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         workflowState == WorkflowState.CONFIRMING
                                 ? R.string.prompt_hold_camera_steady
                                 : R.string.prompt_point_at_an_entity);
+                tts.speech(getResources().getString(R.string.prompt_hold_camera_steady)+"");
                 startCameraPreview();
                 break;
             case CONFIRMED:
                 promptChip.setVisibility(View.VISIBLE);
                 promptChip.setText(R.string.prompt_searching);
+                tts.speech(getResources().getString(R.string.prompt_searching)+"");
                 startCameraPreview();
                 stopCameraPreview();
                 break;
@@ -584,6 +591,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 searchProgressBar.setVisibility(View.VISIBLE);
                 promptChip.setVisibility(View.VISIBLE);
                 promptChip.setText(R.string.prompt_searching);
+                tts.speech(getResources().getString(R.string.prompt_searching)+"");
                 stopCameraPreview();
                 break;
             case SEARCHED:
@@ -613,6 +621,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case CONFIRMING:
                 promptChip.setVisibility(View.VISIBLE);
                 promptChip.setText(R.string.prompt_point_at_an_entity);
+                tts.speech(getResources().getString(R.string.prompt_point_at_an_entity)+"");
                 searchButton.setVisibility(View.GONE);
                 startCameraPreview();
                 break;

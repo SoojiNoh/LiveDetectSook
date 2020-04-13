@@ -64,7 +64,7 @@ public class TextRecognitionProcessor extends FrameProcessorBase<FirebaseVisionT
     private LinkedList<Element> mainTextBuffer = new LinkedList<Element>();
 
     int TEXT_DELAY = 0;
-    int TEXT_INTERVAL = 100;
+    int TEXT_INTERVAL = 120;
     int MAIN_DELAY = 5;
     int MAIN_INTERVAL = 3;
     int BESTBEFORE_DELAY = 5;

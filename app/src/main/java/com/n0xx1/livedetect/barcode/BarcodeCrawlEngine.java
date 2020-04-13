@@ -70,7 +70,7 @@ public class BarcodeCrawlEngine {
             try {
                 Document doc = Jsoup.connect(htmlPageUrl).get();
                 name = doc.select("div[class=productTit]");
-                content = doc.select("dd[class=productDetail]");
+                content = doc.select("dd[class=description]");
 
 
                 String name_string = "";

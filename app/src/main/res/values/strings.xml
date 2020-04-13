@@ -18,15 +18,15 @@
     <string name="cd_flash_button">Toggle camera flash</string>
     <string name="cd_text_toggle">Toggle text detection</string>
     <string name="cd_photo_library_button">Upload image</string>
-    <string name="prompt_point_at_an_entity">Point your camera at an entity</string>
-    <string name="prompt_point_at_a_barcode">Point your camera at a barcode</string>
-    <string name="prompt_hold_camera_steady">Keep camera still for a moment</string>
-    <string name="prompt_move_camera_closer">Move closer to search</string>
-    <string name="prompt_searching">Searching&#8230;</string>
+    <string name="prompt_point_at_an_entity">물체에 카메라를 대주세요</string>
+    <string name="prompt_point_at_a_barcode">바코드에 카메라를 대주세요</string>
+    <string name="prompt_hold_camera_steady">감지중. 카메라를 움직이지 마세요</string>
+    <string name="prompt_move_camera_closer">조사하려면 가까이 가세요</string>
+    <string name="prompt_searching">조사중입니다&#8230;</string>
     <string name="product_search_button">Search entity</string>
     <plurals name="bottom_sheet_title">
-        <item quantity="one">%d match found</item>
-        <item quantity="other">%d matches found</item>
+        <item quantity="one">%d 개의 검색결과를 찾았습니다.</item>
+        <item quantity="other">%d 개의 검색결과들을 찾았습니다.</item>
     </plurals>
     <string name="static_image_prompt_detected_no_results">No results found</string>
     <string name="static_image_prompt_detected_results">Tap on a dot to inspect</string>
