@@ -19,7 +19,10 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
 
     private static final String TAG = "StaticConfirmation";
 
+
+
     @Nullable
+
     private boolean confirming = false;
     private boolean searching = false;
     private float progress = 0;
@@ -41,6 +44,7 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
 
     private Bitmap image;
 
+
     private boolean isTouchingDown = false;
 
     /**
@@ -61,6 +65,7 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
 
 
         confirmationTimeMs = PreferenceUtils.getStaticConfirmationTimeMs(graphicOverlay.getContext());
+
     }
 
     public void activate(int mode){
@@ -120,9 +125,12 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
                         graphicOverlay.invalidate();
                         if (!isTouchingDown) {
                             isTouchingDown = true;
-                            workflowModel.mainActivity.tts.speech("요청중");
+                            alertConfirming();
+                            workflowModel.setWorkflowState(WorkflowState.STATIC_CONFIRMING);
                         }
-
+                        else {
+                            workflowModel.setWorkflowState(WorkflowState.DETECTING);
+                        }
                     }
 
                     @Override
@@ -134,26 +142,27 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
 
         if (touchTimeInMillis < PreferenceUtils.getConfirmationTimeMs(graphicOverlay.getContext())) {
             reset();
-            workflowModel.setWorkflowState(WorkflowState.DETECTING);
+//            workflowModel.setWorkflowState(WorkflowState.DETECTING);
         } else {
             // User is confirming the static selection.
             confirming();
             boolean isConfirmed = (Float.compare(getProgress(), 1f) == 0);
             if (isConfirmed) {
-                workflowModel.setWorkflowState(WorkflowState.CONFIRMED);
-                workflowModel.detectedImage.setValue(image);
+                workflowModel.setWorkflowState(WorkflowState.STATIC_CONFIRMED);
+//                workflowModel.detectedEntity.setValue(image);
                     if (!searching) {
                         searching = true;
                         workflowModel.setWorkflowState(WorkflowState.SEARCHING);
-                        workflowModel.staticToDetect.setValue(image);
+                        workflowModel.staticDetectBitmap.setValue(image);
+//                        workflowModel.staticDetectRequest.setValue(image);
 
                     }
 
 
             }
             else
-                workflowModel.setWorkflowState(WorkflowState.CONFIRMING);
-//                workflowModel.setWorkflowState(WorkflowState.CONFIRMED);
+                workflowModel.setWorkflowState(WorkflowState.STATIC_CONFIRMED);
+//                workflowModel.setWorkflowState(WorkflowState.LIVE_LIVE_CONFIRMED);
 
         }
 
@@ -169,5 +178,11 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
 
     }
 
+    private void alertConfirming(){
+        if (!confirming){
+            workflowModel.mainActivity.tts.speech("요청중");
+        }
+
+    }
 
 }

@@ -39,9 +39,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class StaticEngine {
+public class StaticDetectEngine {
 
-    private static final String TAG = "StaticEngine";
+    private static final String TAG = "StaticDetectEngine";
 
     private static final int MAX_DIMENSION = 1200;
     private static final int MAX_LABEL_RESULTS = 10;
@@ -55,18 +55,19 @@ public class StaticEngine {
     private static final String ANDROID_CERT_HEADER = "X-Android-Cert";
     private static final String ANDROID_PACKAGE_HEADER = "X-Android-Package";
 
-    public interface StaticResultListener {
-        void onStaticLabelCompleted(List<Label> labelList, Bitmap image, Bitmap image_rect);
-        void onStaticTextCompleted(List<Text> textList, Bitmap image, Bitmap image_rect);
+    public interface DetectResultListener {
+        void onDetectLabelCompleted(List<Label> labelList, Bitmap image, StaticDetectRequest reqeust);
+        void onDetectTextCompleted(List<Text> textList, Bitmap image, Bitmap image_rect);
     }
 
     private final Context mContext;
-    private StaticResultListener mListener;
+    private DetectResultListener mListener;
     private final WorkflowModel workflowModel;
     private final GraphicOverlay graphicOverlay;
     private Bitmap image;
+    private StaticDetectRequest request;
 
-    public StaticEngine(Context mContext, WorkflowModel workflowModel, GraphicOverlay graphicOverlay) {
+    public StaticDetectEngine(Context mContext, WorkflowModel workflowModel, GraphicOverlay graphicOverlay) {
 
         this.mContext = mContext;
         this.workflowModel = workflowModel;
@@ -78,7 +79,7 @@ public class StaticEngine {
         return image;
     }
 
-    public void detectText(Bitmap image, StaticResultListener listener){
+    public void detectText(Bitmap image, DetectResultListener listener){
 
         this.image = image;
         this.mListener = listener;
@@ -103,9 +104,10 @@ public class StaticEngine {
         callCloudVision(image, TEXT_MODE);
     }
 
-    public void detectLabel(Bitmap image, StaticResultListener listener){
+    public void detectLabel(StaticDetectRequest request, DetectResultListener listener){
 
-        this.image = image;
+        this.request = request;
+        this.image = request.getCroppedImage();
         this.mListener = listener;
 
         if (image != null) {
@@ -216,7 +218,7 @@ public class StaticEngine {
                         new Label(mContext.getResources(), image, label.getDescription(), null));
                     }
 //                    Bitmap mBitmapRect = rectBitmap(labels, mBitmap);
-                    mListener.onStaticLabelCompleted(labelList, mBitmap, null);
+                    mListener.onDetectLabelCompleted(labelList, mBitmap, request);
                 } else {
 
                     Log.d(TAG, "no label search result");
@@ -238,7 +240,7 @@ public class StaticEngine {
                                 new Text(/* imageUrl= */ mContext.getResources(), image, text.getDescription(), (ArrayList) text.getBoundingPoly().getVertices()));
                     }
                     Bitmap mBitmapRect = rectBitmap(texts, mBitmap);
-                    mListener.onStaticTextCompleted(textList, mBitmap, mBitmapRect);
+                    mListener.onDetectTextCompleted(textList, mBitmap, mBitmapRect);
                 } else {
 
                     Log.d(TAG, "no text search result");

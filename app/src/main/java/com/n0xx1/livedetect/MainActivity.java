@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.hardware.Camera;
@@ -14,6 +15,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -53,19 +55,25 @@ import com.n0xx1.livedetect.settings.PreferenceUtils;
 import com.n0xx1.livedetect.settings.SettingsActivity;
 import com.n0xx1.livedetect.staticdetection.Label;
 import com.n0xx1.livedetect.staticdetection.LabelAdapter;
+import com.n0xx1.livedetect.staticdetection.PreviewCardAdapter;
 import com.n0xx1.livedetect.staticdetection.StaticConfirmationController;
-import com.n0xx1.livedetect.staticdetection.StaticEngine;
+import com.n0xx1.livedetect.staticdetection.StaticDetectEngine;
+import com.n0xx1.livedetect.staticdetection.StaticDetectProcessor;
+import com.n0xx1.livedetect.staticdetection.StaticDetectResponse;
+import com.n0xx1.livedetect.staticdetection.StaticObjectDotView;
 import com.n0xx1.livedetect.staticdetection.Text;
 import com.n0xx1.livedetect.staticdetection.TextAdapter;
-import com.n0xx1.livedetect.staticdetection.TextedEntity;
+import com.n0xx1.livedetect.staticdetection.TextedObject;
 import com.n0xx1.livedetect.text2speech.Text2Speech;
 import com.n0xx1.livedetect.textdetection.TextRecognitionProcessor;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeMap;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, PreviewCardAdapter.CardItemListener{
+
 
     private static final String TAG = "MainActivity";
 
@@ -77,11 +85,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public static int CURRENT_MODE;
 
     private MultiEntityProcessor multiEntityProcessor;
+    private StaticDetectProcessor staticDetectProcessor;
     private ProminentEntityProcessor prominentEntityProcessor;
     private TextRecognitionProcessor textRecognitionProcessor;
     private BarcodeProcessor barcodeProcessor;
     private StaticConfirmationController staticConfirmationController;
-    private StaticEngine staticEngine;
+    private StaticDetectEngine staticDetectEngine;
 
     private FrameProcessor frameProcessor;
     private CameraSource cameraSource;
@@ -100,7 +109,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private WorkflowState currentWorkflowState;
     private SearchEngine searchEngine;
     public ProductCrawlEngine productCrawlEngine;
+
+    private View loadingView;
     private Chip bottomPromptChip;
+    private ImageView inputImageView;
     private RecyclerView previewCardCarousel;
     private ViewGroup dotViewContainer;
     private int dotViewSize;
@@ -108,7 +120,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private BottomSheetBehavior<View> bottomSheetBehavior;
     private BottomSheetScrimView bottomSheetScrimView;
-    private RecyclerView productRecyclerView;
+    private RecyclerView recyclerView;
     private TextView bottomSheetTitleView;
     private Bitmap entityThumbnailForBottomSheet;
     private Bitmap entityThumbnailForZoomView;
@@ -117,6 +129,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private Barcode barcode;
     private BarcodedEntity BarcodedProductsForBottomSheet;
+
+    private TreeMap<Integer, StaticDetectResponse> detectedResultMap = new TreeMap<>();
+    private StaticDetectResponse detectedObjectForBottomSheet;
 
     public Text2Speech tts;
 
@@ -144,9 +159,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 (AnimatorSet) AnimatorInflater.loadAnimator(this, R.animator.search_button_enter);
         searchButtonAnimator.setTarget(searchButton);
         searchProgressBar = findViewById(R.id.search_progress_bar);
+        loadingView = findViewById(R.id.loading_view);
+        loadingView.setOnClickListener(this);
 
         bottomPromptChip = findViewById(R.id.bottom_prompt_chip);
 
+        inputImageView = findViewById(R.id.input_image_view);
         previewCardCarousel = findViewById(R.id.card_recycler_view);
         previewCardCarousel.setHasFixedSize(true);
         previewCardCarousel.setLayoutManager(
@@ -196,6 +214,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         workflowModel.mainActivity = this;
         workflowModel.resources = graphicOverlay.getResources();
 
+        staticDetectProcessor = new StaticDetectProcessor(graphicOverlay, workflowModel);
         staticConfirmationController = new StaticConfirmationController(graphicOverlay, workflowModel, getApplicationContext());
         multiEntityProcessor = new MultiEntityProcessor(graphicOverlay, workflowModel, staticConfirmationController);
         prominentEntityProcessor = new ProminentEntityProcessor(graphicOverlay, workflowModel, staticConfirmationController);
@@ -349,9 +368,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     @Override
                     public void onSlide(@NonNull View bottomSheet, float slideOffset) {
                         SearchedEntity searchedEntity = workflowModel.searchedEntity.getValue();
-                        TextedEntity textedEntity = workflowModel.textedEntity.getValue();
+                        TextedObject textedObject = workflowModel.textedObject.getValue();
 
-                        if ((searchedEntity == null && textedEntity == null) || Float.isNaN(slideOffset)) {
+                        if ((searchedEntity == null && textedObject == null) || Float.isNaN(slideOffset)) {
                             return;
                         }
 
@@ -371,7 +390,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             } else {
 
                             }
-                        } else if (textedEntity!=null){
+                        } else if (textedObject!=null){
                             bottomSheetScrimView.updateWithThumbnailTranslate(
                                     entityThumbnailForBottomSheet, collapsedStateHeight, slideOffset, bottomSheet);
                         }
@@ -382,10 +401,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         bottomSheetScrimView.setOnClickListener(this);
 
         bottomSheetTitleView = findViewById(R.id.bottom_sheet_title);
-        productRecyclerView = findViewById(R.id.product_recycler_view);
-        productRecyclerView.setHasFixedSize(true);
-        productRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        productRecyclerView.setAdapter(new EntityAdapter(ImmutableList.of()));
+        recyclerView = findViewById(R.id.product_recycler_view);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(new EntityAdapter(ImmutableList.of()));
     }
 
     private void setUpWorkflowModel() {
@@ -411,7 +430,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 });
 
         // Observes changes on the entity to search, if happens, fire product search request.
-        workflowModel.entityToSearch.observe(
+        workflowModel.entityToDetect.observe(
                 this, entity -> {
                     entityThumbnailForZoomView = entity.getBitmap();
                     searchEngine.search(this, entity, workflowModel);
@@ -429,15 +448,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                 getResources()
                                         .getQuantityString(
                                                 R.plurals.bottom_sheet_title, productList.size(), productList.size()));
-                        productRecyclerView.setAdapter(new EntityAdapter(productList));
+                        recyclerView.setAdapter(new EntityAdapter(productList));
                         slidingSheetUpFromHiddenState = true;
                         bottomSheetBehavior.setPeekHeight(preview.getHeight() / 2);
                         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
 
                         String result="";
                             for(int i=0 ; i<productList.size(); i++){
+                                if (i!=0) result+="혹은 ";
                                 result+=productList.get(i).getTitle();
-                                result+="혹은 ";
                             }
                                 tts.speech(result+"");
 //                                    +((Entity)productList.get(1)).getTitle()+""+((Entity)productList.get(2)).getTitle());
@@ -477,7 +496,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         .getQuantityString(
                                                 R.plurals.bottom_sheet_title, barcodedEntity.getBarcodedProducts().size(), barcodedEntity.getBarcodedProducts().size()));
                         tts.speech("검색결과가 나왔습니다.");
-                        productRecyclerView.setAdapter(new BarcodedProductAdapter(barcodedEntity.getBarcodedProducts()));
+                        recyclerView.setAdapter(new BarcodedProductAdapter(barcodedEntity.getBarcodedProducts()));
                         slidingSheetUpFromHiddenState = true;
                         bottomSheetBehavior.setPeekHeight(preview.getHeight() / 2);
                         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
@@ -510,30 +529,55 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //                    }
 //                }
 //        );
+        workflowModel.staticDetectBitmap.observe(
+                this, bitmap -> {
+                    inputImageView.setImageDrawable(null);
+                    previewCardCarousel.setAdapter(new PreviewCardAdapter(ImmutableList.of(), this));
+                    previewCardCarousel.clearOnScrollListeners();
+                    dotViewContainer.removeAllViews();
+                    currentSelectedObjectIndex = 0;
+
+                    inputImageView.setImageBitmap(bitmap);
+                    staticDetectProcessor.detectEntityRegion(bitmap);
+                }
+        );
 
         // Observes changes on the entity to search, if happens, fire product search request.
-        workflowModel.staticToDetect.observe(
-                this, image -> {
-                    staticEngine = new StaticEngine(getApplicationContext(), workflowModel, graphicOverlay);
-                    if (CURRENT_MODE == TEXT_MODE)
-                        staticEngine.detectText(image, workflowModel);
-                    else if (CURRENT_MODE == PROMI_MODE || CURRENT_MODE == MULTI_MODE)
-                        staticEngine.detectLabel(image, workflowModel);
+        workflowModel.staticDetectRequest.observe(
+                this, request -> {
+                    staticDetectProcessor.requestStaticDetect(request);
 //                    entityThumbnailForZoomView = textBimap;
                 });
 
-        workflowModel.textedEntity.observe(
+
+        workflowModel.staticDetectResponse.observe(this,
+                response -> {
+                    if (response.getLabeledObject()!=null){
+                        staticDetectProcessor.onStaticDetectCompleted(response.getRequest(), response);
+                    } else {
+                        promptChip.setText(R.string.static_image_prompt_detected_no_results);
+                        tts.speech(getResources().getString(R.string.static_image_prompt_detected_no_results)+"");
+                    }
+                });
+
+        workflowModel.staticDetectedMap.observe(this,
+                detectedResultMap -> {
+                    this.detectedResultMap = detectedResultMap;
+                    StaticDetectCardView();
+                });
+
+        workflowModel.textedObject.observe(
                 this,
-                textedEntity -> {
-                    if (textedEntity != null) {
-                        List<Text> textList = textedEntity.getTextList();
-                        entityThumbnailForBottomSheet = textedEntity.getTextThumbnail();
-                        entityThumbnailForZoomView = textedEntity.getTextRectBitmap();
+                textedObject -> {
+                    if (textedObject != null) {
+                        List<Text> textList = textedObject.getTextList();
+                        entityThumbnailForBottomSheet = textedObject.getTextThumbnail();
+                        entityThumbnailForZoomView = textedObject.getTextRectBitmap();
                         bottomSheetTitleView.setText(
                                 getResources()
                                         .getQuantityString(
                                                 R.plurals.bottom_sheet_title, textList.size(), textList.size()));
-                        productRecyclerView.setAdapter(new TextAdapter(textList));
+                        recyclerView.setAdapter(new TextAdapter(textList));
                         slidingSheetUpFromHiddenState = true;
                         bottomSheetBehavior.setPeekHeight(preview.getHeight() / 2);
                         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
@@ -542,25 +586,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
         );
 
-        workflowModel.labeledEntity.observe(
-                this,
-                labeledEntity -> {
-                    if (labeledEntity != null) {
-                        List<Label> labelList = labeledEntity.getLabelList();
-                        entityThumbnailForBottomSheet = labeledEntity.getLabelThumbnail();
-//                        entityThumbnailForZoomView = labeledEntity.getLabelRectBitmap();
-                        bottomSheetTitleView.setText(
-                                getResources()
-                                        .getQuantityString(
-                                                R.plurals.bottom_sheet_title, labelList.size(), labelList.size()));
-                        productRecyclerView.setAdapter(new LabelAdapter(labelList));
-                        slidingSheetUpFromHiddenState = true;
-                        bottomSheetBehavior.setPeekHeight(preview.getHeight() / 2);
-                        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-                    }
 
-                }
-        );
+//        workflowModel.labeledObject.observe(
+//                this,
+//                labeledObject -> {
+//                    if (labeledObject != null) {
+//                        List<Label> labelList = labeledObject.getLabelList();
+////                        onStaticDetectCompleted(staticDetectRequests.get(), labelList);
+//
+////                        entityThumbnailForBottomSheet = labeledObject.getLabelThumbnail();
+//////                        entityThumbnailForZoomView = labeledObject.getLabelRectBitmap();
+////                        bottomSheetTitleView.setText(
+////                                getResources()
+////                                        .getQuantityString(
+////                                                R.plurals.bottom_sheet_title, labelList.size(), labelList.size()));
+////                        recyclerView.setAdapter(new LabelAdapter(labelList));
+////                        slidingSheetUpFromHiddenState = true;
+////                        bottomSheetBehavior.setPeekHeight(preview.getHeight() / 2);
+////                        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+//                    }
+//
+//                }
+//        );
     }
 
     private void stateChangeInAutoSearchMode(WorkflowState workflowState) {
@@ -568,23 +615,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         searchButton.setVisibility(View.GONE);
         searchProgressBar.setVisibility(View.GONE);
+        loadingView.setVisibility(View.GONE);
+
         switch (workflowState) {
             case DETECTING:
             case DETECTED:
-            case CONFIRMING:
+            case LIVE_CONFIRMING:
                 promptChip.setVisibility(View.VISIBLE);
                 promptChip.setText(
-                        workflowState == WorkflowState.CONFIRMING
+                        workflowState == WorkflowState.LIVE_CONFIRMING
                                 ? R.string.prompt_hold_camera_steady
                                 : R.string.prompt_point_at_an_entity);
-                tts.speech(getResources().getString(R.string.prompt_hold_camera_steady)+"");
+//                tts.speech(getResources().getString(R.string.prompt_hold_camera_steady)+"");
                 startCameraPreview();
                 break;
-            case CONFIRMED:
+            case LIVE_CONFIRMED:
                 promptChip.setVisibility(View.VISIBLE);
                 promptChip.setText(R.string.prompt_searching);
                 tts.speech(getResources().getString(R.string.prompt_searching)+"");
+//                stopCameraPreview();
+                break;
+            case STATIC_CONFIRMING:
+                promptChip.setVisibility(View.VISIBLE);
                 startCameraPreview();
+                break;
+            case STATIC_CONFIRMED:
+                promptChip.setVisibility(View.VISIBLE);
+                promptChip.setText(R.string.prompt_searching);
+                tts.speech(getResources().getString(R.string.prompt_searching)+"");
                 stopCameraPreview();
                 break;
             case SEARCHING:
@@ -594,7 +652,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 tts.speech(getResources().getString(R.string.prompt_searching)+"");
                 stopCameraPreview();
                 break;
-            case SEARCHED:
+            case LIVE_SEARCHED:
+                promptChip.setVisibility(View.GONE);
+//                stopCameraPreview();
+                break;
+            case STATIC_SEARCHED:
                 promptChip.setVisibility(View.GONE);
                 stopCameraPreview();
                 break;
@@ -618,14 +680,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         switch (workflowState) {
             case DETECTING:
             case DETECTED:
-            case CONFIRMING:
+            case LIVE_CONFIRMING:
                 promptChip.setVisibility(View.VISIBLE);
                 promptChip.setText(R.string.prompt_point_at_an_entity);
                 tts.speech(getResources().getString(R.string.prompt_point_at_an_entity)+"");
                 searchButton.setVisibility(View.GONE);
                 startCameraPreview();
                 break;
-            case CONFIRMED:
+            case LIVE_CONFIRMED:
                 promptChip.setVisibility(View.GONE);
                 searchButton.setVisibility(View.VISIBLE);
                 searchButton.setEnabled(true);
@@ -640,7 +702,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 searchProgressBar.setVisibility(View.VISIBLE);
                 stopCameraPreview();
                 break;
-            case SEARCHED:
+            case LIVE_SEARCHED:
                 promptChip.setVisibility(View.GONE);
                 searchButton.setVisibility(View.GONE);
                 stopCameraPreview();
@@ -710,41 +772,74 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
 
-//    @Override
-//    public void onPreviewCardClicked(BarcodedEntity barcodedEntity) {
-//        showSearchResults(barcodedEntity);
-//    }
+    private void StaticDetectCardView(){
+        showBottomPromptChip(getString(R.string.static_image_prompt_detected_results));
 
-//    private void showSearchResults(BarcodedEntity barcodedEntity) {
-//        BarcodedProductsForBottomSheet = barcodedEntity;
-//        List<BarcodedEntity> productList = barcodedEntity;
-//        bottomSheetTitleView.setText(
-//                getResources()
-//                        .getQuantityString(
-//                                R.plurals.bottom_sheet_title, productList.size(), productList.size()));
-//        productRecyclerView.setAdapter(new ProductAdapter(productList));
-//        bottomSheetBehavior.setPeekHeight(((View) inputImageView.getParent()).getHeight() / 2);
-//        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-//    }
+        previewCardCarousel.setAdapter(
+                new PreviewCardAdapter(ImmutableList.copyOf(detectedResultMap.values()), this));
 
-//    private void selectNewObject(int objectIndex) {
-//        StaticObjectDotView dotViewToDeselect =
-//                (StaticObjectDotView) dotViewContainer.getChildAt(currentSelectedObjectIndex);
-//        dotViewToDeselect.playAnimationWithSelectedState(false);
-//
-//        currentSelectedObjectIndex = objectIndex;
-//
-//        StaticObjectDotView selectedDotView =
-//                (StaticObjectDotView) dotViewContainer.getChildAt(currentSelectedObjectIndex);
-//        selectedDotView.playAnimationWithSelectedState(true);
-//    }
+        previewCardCarousel.addOnScrollListener(
+                new RecyclerView.OnScrollListener() {
+                    @Override
+                    public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                        Log.d(TAG, "New card scroll state: " + newState);
+                        if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                            for (int i = 0; i < recyclerView.getChildCount(); i++) {
+                                View childView = recyclerView.getChildAt(i);
+                                if (childView.getX() >= 0) {
+                                    int cardIndex = recyclerView.getChildAdapterPosition(childView);
+                                    if (cardIndex != currentSelectedObjectIndex) {
+                                        selectNewObject(cardIndex);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                });
 
-    private void showBottomPromptChip(String message) {
-        bottomPromptChip.setVisibility(View.VISIBLE);
-        bottomPromptChip.setText(message);
+        for (StaticDetectResponse response : detectedResultMap.values()) {
+            StaticObjectDotView dotView = createDotView(response);
+            dotView.setOnClickListener(
+                    v -> {
+                        if (response.getRequest().getRequestIndex() == currentSelectedObjectIndex) {
+                            showCardResults(response);
+                        } else {
+                            selectNewObject(response.getRequest().getRequestIndex());
+                            showCardResults(response);
+                            previewCardCarousel.smoothScrollToPosition(response.getRequest().getRequestIndex());
+                        }
+                    });
+
+            dotViewContainer.addView(dotView);
+            AnimatorSet animatorSet =
+                    ((AnimatorSet) AnimatorInflater.loadAnimator(this, R.animator.static_image_dot_enter));
+            animatorSet.setTarget(dotView);
+            animatorSet.start();
+        }
+
+
     }
 
 
+
+    private void showCardResults(StaticDetectResponse response) {
+        detectedObjectForBottomSheet = response;
+        List<Label> labelList = response.getLabeledObject().getLabelList();
+        bottomSheetTitleView.setText(
+                getResources()
+                        .getQuantityString(
+                                R.plurals.bottom_sheet_title, labelList.size(), labelList.size()));
+        recyclerView.setAdapter(new LabelAdapter(labelList));
+        bottomSheetBehavior.setPeekHeight(((View) inputImageView.getParent()).getHeight() / 2);
+        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+    }
+
+
+    @Override
+    public void onPreviewCardClicked(StaticDetectResponse response) {
+        showCardResults(response);
+    }
 
     private static class CardItemDecoration extends RecyclerView.ItemDecoration {
 
@@ -768,4 +863,63 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
     }
+
+    private StaticObjectDotView createDotView(StaticDetectResponse response) {
+        float viewCoordinateScale;
+        float horizontalGap;
+        float verticalGap;
+        float inputImageViewRatio = (float) inputImageView.getWidth() / inputImageView.getHeight();
+        float inputBitmapRatio = (float) inputImageView.getWidth() / inputImageView.getHeight();
+        if (inputBitmapRatio <= inputImageViewRatio) { // Image content fills height
+            viewCoordinateScale = (float) inputImageView.getHeight() / inputImageView.getHeight();
+            horizontalGap =
+                    (inputImageView.getWidth() - inputImageView.getWidth() * viewCoordinateScale) / 2;
+            verticalGap = 0;
+        } else { // Image content fills width
+            viewCoordinateScale = (float) inputImageView.getWidth() / inputImageView.getWidth();
+            horizontalGap = 0;
+            verticalGap =
+                    (inputImageView.getHeight() - inputImageView.getHeight() * viewCoordinateScale) / 2;
+        }
+
+        Rect boundingBox = response.getLabeledObject().getBoundingBox();
+        RectF boxInViewCoordinate =
+                new RectF(
+                        boundingBox.left * viewCoordinateScale + horizontalGap,
+                        boundingBox.top * viewCoordinateScale + verticalGap,
+                        boundingBox.right * viewCoordinateScale + horizontalGap,
+                        boundingBox.bottom * viewCoordinateScale + verticalGap);
+        boolean initialSelected = (response.getRequest().getRequestIndex() == 0);
+        StaticObjectDotView dotView = new StaticObjectDotView(this, initialSelected);
+        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(dotViewSize, dotViewSize);
+        PointF dotCenter =
+                new PointF(
+                        (boxInViewCoordinate.right + boxInViewCoordinate.left) / 2,
+                        (boxInViewCoordinate.bottom + boxInViewCoordinate.top) / 2);
+        layoutParams.setMargins(
+                (int) (dotCenter.x - dotViewSize / 2f), (int) (dotCenter.y - dotViewSize / 2f), 0, 0);
+        dotView.setLayoutParams(layoutParams);
+        return dotView;
+    }
+
+    private void selectNewObject(int objectIndex) {
+        StaticObjectDotView dotViewToDeselect =
+                (StaticObjectDotView) dotViewContainer.getChildAt(currentSelectedObjectIndex);
+        dotViewToDeselect.playAnimationWithSelectedState(false);
+
+        currentSelectedObjectIndex = objectIndex;
+
+        StaticObjectDotView selectedDotView =
+                (StaticObjectDotView) dotViewContainer.getChildAt(currentSelectedObjectIndex);
+        selectedDotView.playAnimationWithSelectedState(true);
+    }
+
+
+
+    public void showBottomPromptChip(String message) {
+        bottomPromptChip.setVisibility(View.VISIBLE);
+        bottomPromptChip.setText(message);
+    }
+
+
 }

@@ -9,7 +9,6 @@ import androidx.annotation.Nullable;
 import com.n0xx1.livedetect.R;
 import com.n0xx1.livedetect.Utils;
 import com.n0xx1.livedetect.entitydetection.DetectedEntity;
-
 import java.util.List;
 
 public class SearchedEntity {

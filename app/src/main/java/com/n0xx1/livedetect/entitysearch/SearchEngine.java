@@ -248,10 +248,7 @@ public class SearchEngine {
                     Log.d(TAG, "no search result");
 
                 }
-
-
                 mListener.onSearchCompleted(mEntity, productList);
-
             }
         }
 

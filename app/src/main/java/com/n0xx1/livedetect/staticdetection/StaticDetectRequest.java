@@ -1,0 +1,50 @@
+package com.n0xx1.livedetect.staticdetection;
+
+import android.graphics.Bitmap;
+
+import com.google.firebase.ml.vision.common.FirebaseVisionImage;
+import com.google.firebase.ml.vision.objects.FirebaseVisionObject;
+import com.google.firebase.ml.vision.text.FirebaseVisionText;
+
+public class StaticDetectRequest {
+
+    private FirebaseVisionImage image;
+    private Bitmap croppedEntity;
+    private FirebaseVisionObject entity;
+    private FirebaseVisionText text;
+    private int requestIndex;
+
+
+    public StaticDetectRequest(int requestIndex, FirebaseVisionImage image, FirebaseVisionObject entity){
+        this.requestIndex = requestIndex;
+        this.image = image;
+        this.entity = entity;
+    }
+
+    public StaticDetectRequest(FirebaseVisionImage image, FirebaseVisionText text){
+        this.image = image;
+        this.text = text;
+    }
+
+    //GETTER
+    public int getRequestIndex() {
+        return requestIndex;
+    }
+    public Bitmap getImage(){
+        return image.getBitmap();
+    }
+    public FirebaseVisionObject getEntityObject() {
+        return  entity;
+    }
+    public FirebaseVisionText getTextObject(){
+        return text;
+    }
+    public Bitmap getCroppedImage() {
+        return croppedEntity;
+    }
+
+    //SETTER
+    public void setCroppedImage(Bitmap croppedEntity){
+        this.croppedEntity = croppedEntity;
+    }
+}

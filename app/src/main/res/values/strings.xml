@@ -28,7 +28,7 @@
         <item quantity="one">%d 개의 검색결과를 찾았습니다.</item>
         <item quantity="other">%d 개의 검색결과들을 찾았습니다.</item>
     </plurals>
-    <string name="static_image_prompt_detected_no_results">No results found</string>
+    <string name="static_image_prompt_detected_no_results">검색결과가 없습니다.</string>
     <string name="static_image_prompt_detected_results">Tap on a dot to inspect</string>
     <string name="static_image_card_no_result_title">No result found</string>
     <string name="static_image_card_no_result_subtitle">Support text place holder</string>

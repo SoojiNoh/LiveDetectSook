@@ -77,7 +77,7 @@ public class BarcodeProcessor extends FrameProcessorBase<List<FirebaseVisionBarc
             if (sizeProgress < 1) {
                 // Barcode in the camera view is too small, so prompt user to move camera closer.
                 graphicOverlay.add(new BarcodeConfirmingGraphic(graphicOverlay, barcodeInCenter));
-                workflowModel.setWorkflowState(WorkflowState.CONFIRMING);
+                workflowModel.setWorkflowState(WorkflowState.LIVE_CONFIRMING);
 
             } else {
                 // Barcode size in the camera view is sufficient.
@@ -106,7 +106,7 @@ public class BarcodeProcessor extends FrameProcessorBase<List<FirebaseVisionBarc
                 animation -> {
                     if (Float.compare((float) loadingAnimator.getAnimatedValue(), endProgress) >= 0) {
                         graphicOverlay.clear();
-                        workflowModel.setWorkflowState(WorkflowState.SEARCHED);
+                        workflowModel.setWorkflowState(WorkflowState.LIVE_SEARCHED);
                         workflowModel.detectedBarcode.setValue(barcode);
                         BarcodeCrawlEngine crawlEngine = new BarcodeCrawlEngine(workflowModel,barcode.getRawValue());
                         crawlEngine.crawl();

@@ -21,20 +21,23 @@ import com.n0xx1.livedetect.entitysearch.SearchEngine.SearchResultListener;
 import com.n0xx1.livedetect.entitysearch.SearchedEntity;
 import com.n0xx1.livedetect.settings.PreferenceUtils;
 import com.n0xx1.livedetect.staticdetection.Label;
-import com.n0xx1.livedetect.staticdetection.LabeledEntity;
-import com.n0xx1.livedetect.staticdetection.StaticEngine.StaticResultListener;
+import com.n0xx1.livedetect.staticdetection.LabeledObject;
+import com.n0xx1.livedetect.staticdetection.StaticDetectEngine.DetectResultListener;
+import com.n0xx1.livedetect.staticdetection.StaticDetectRequest;
+import com.n0xx1.livedetect.staticdetection.StaticDetectResponse;
 import com.n0xx1.livedetect.staticdetection.Text;
-import com.n0xx1.livedetect.staticdetection.TextedEntity;
+import com.n0xx1.livedetect.staticdetection.TextedObject;
 
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /** View model for handling application workflow based on camera preview. */
-public class WorkflowModel extends AndroidViewModel implements SearchResultListener, StaticResultListener {
+public class WorkflowModel extends AndroidViewModel implements SearchResultListener, DetectResultListener {
 
     private static String TAG = "WorkflowModel";
     /**
@@ -44,10 +47,13 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
         NOT_STARTED,
         DETECTING,
         DETECTED,
-        CONFIRMING,
-        CONFIRMED,
+        LIVE_CONFIRMING,
+        LIVE_CONFIRMED,
+        STATIC_CONFIRMING,
+        STATIC_CONFIRMED,
         SEARCHING,
-        SEARCHED
+        LIVE_SEARCHED,
+        STATIC_SEARCHED
     }
 
     public MainActivity mainActivity;
@@ -57,21 +63,23 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
 
     public final MutableLiveData<WorkflowState> workflowState = new MutableLiveData<>();
 
-    public final MutableLiveData<DetectedEntity> entityToSearch = new MutableLiveData<>();
+    public final MutableLiveData<DetectedEntity> entityToDetect = new MutableLiveData<>();
     public final MutableLiveData<SearchedEntity> searchedEntity = new MutableLiveData<>();
-    public final MutableLiveData<LabeledEntity> labeledEntity = new MutableLiveData<>();
+//    public final MutableLiveData<LabeledObject> labeledObject = new MutableLiveData<>();
 
-    public final MutableLiveData<Bitmap> staticToDetect = new MutableLiveData<>();
-    public final MutableLiveData<TextedEntity> textedEntity = new MutableLiveData<>();
+    public final MutableLiveData<Bitmap> staticDetectBitmap = new MutableLiveData<>();
+    public final MutableLiveData<StaticDetectRequest> staticDetectRequest = new MutableLiveData<>();
+    public final MutableLiveData<StaticDetectResponse> staticDetectResponse = new MutableLiveData<>();
+    public final MutableLiveData<TreeMap<Integer, StaticDetectResponse>> staticDetectedMap = new MutableLiveData<>();
+
+    public final MutableLiveData<TextedObject> textedObject = new MutableLiveData<>();
 
     public final MutableLiveData<FirebaseVisionBarcode> detectedBarcode = new MutableLiveData<>();
     public final MutableLiveData<Barcode> barcode = new MutableLiveData<>();
     public final MutableLiveData<BarcodedEntity> barcodedEntity = new MutableLiveData<>();
 
-    public final MutableLiveData<String> detectedText = new MutableLiveData<>();
-
-
-    public final MutableLiveData<Bitmap> detectedImage = new MutableLiveData<>();
+//    public final MutableLiveData<String> detectedText = new MutableLiveData<>();
+//    public final MutableLiveData<Bitmap> detectedBitmap = new MutableLiveData<>();
 
     private final Set<Integer> entityIdsToSearch = new HashSet<>();
 
@@ -86,9 +94,9 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
 
     @MainThread
     public void setWorkflowState(WorkflowState workflowState) {
-        if (!workflowState.equals(WorkflowState.CONFIRMED)
+        if (!workflowState.equals(WorkflowState.LIVE_CONFIRMED)
                 && !workflowState.equals(WorkflowState.SEARCHING)
-                && !workflowState.equals(WorkflowState.SEARCHED)) {
+                && !workflowState.equals(WorkflowState.STATIC_SEARCHED)) {
             confirmedEntity = null;
         }
         this.workflowState.setValue(workflowState);
@@ -103,10 +111,10 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
                 setWorkflowState(WorkflowState.SEARCHING);
                 triggerSearch(entity);
             } else {
-                setWorkflowState(WorkflowState.CONFIRMED);
+                setWorkflowState(WorkflowState.LIVE_CONFIRMED);
             }
         } else {
-            setWorkflowState(WorkflowState.CONFIRMING);
+            setWorkflowState(WorkflowState.LIVE_CONFIRMING);
         }
     }
 
@@ -128,7 +136,7 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
         }
 
         entityIdsToSearch.add(entityId);
-        entityToSearch.setValue(entity);
+        entityToDetect.setValue(entity);
     }
 
     public void markCameraLive() {
@@ -177,25 +185,31 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
         }
 
         entityIdsToSearch.remove(entity.getEntityId());
-        setWorkflowState(WorkflowState.SEARCHED);
+        setWorkflowState(WorkflowState.LIVE_SEARCHED);
         searchedEntity.setValue(
-                new SearchedEntity(getContext().getResources(), confirmedEntity, products));
+                new SearchedEntity(getContext().getResources(), entity, products));
     }
 
     @Override
-    public void onStaticLabelCompleted(List<Label> texts, Bitmap image, Bitmap image_rect) {
-        setWorkflowState(WorkflowState.SEARCHED);
-        labeledEntity.setValue(
-                new LabeledEntity(getContext().getResources(), texts, image, image_rect)
-        );
+    public void onDetectLabelCompleted(List<Label> labels, Bitmap croppedEntity, StaticDetectRequest request) {
+
+        entityIdsToSearch.clear();
+        setWorkflowState(WorkflowState.STATIC_SEARCHED);
+
+        LabeledObject labeledObject = new LabeledObject(getContext().getResources(), labels, request.getImage(), croppedEntity);
+        StaticDetectResponse response = new StaticDetectResponse(labeledObject, croppedEntity, request, resources);
+        staticDetectResponse.setValue(response);
+//        labeledObject.setValue(
+//                new LabeledObject(getContext().getResources(), texts, image, null)
+//        );
 
     }
 
     @Override
-    public void onStaticTextCompleted(List<Text> texts, Bitmap image, Bitmap image_rect) {
-        setWorkflowState(WorkflowState.SEARCHED);
-        textedEntity.setValue(
-                new TextedEntity(getContext().getResources(), texts, image, image_rect)
+    public void onDetectTextCompleted(List<Text> texts, Bitmap image, Bitmap image_rect) {
+        setWorkflowState(WorkflowState.STATIC_SEARCHED);
+        textedObject.setValue(
+                new TextedObject(getContext().getResources(), texts, image, image_rect)
         );
 
     }

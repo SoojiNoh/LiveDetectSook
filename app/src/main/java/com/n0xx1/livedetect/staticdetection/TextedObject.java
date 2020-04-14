@@ -11,10 +11,10 @@ import com.n0xx1.livedetect.Utils;
 
 import java.util.List;
 
-public class LabeledEntity {
+public class TextedObject {
 
-    //    private final DetectedEntity entity;
-    private final List<Label> labelList;
+//    private final DetectedEntity entity;
+    private final List<Text> textList;
     private final int entityThumbnailCornerRadius;
 
     @Nullable
@@ -22,8 +22,8 @@ public class LabeledEntity {
     private Bitmap image_rect;
 
 
-    public LabeledEntity(Resources resources, List<Label> labelList, Bitmap image, Bitmap image_rect) {
-        this.labelList = labelList;
+    public TextedObject(Resources resources, List<Text> textList, Bitmap image, Bitmap image_rect) {
+        this.textList = textList;
         this.entityThumbnailCornerRadius =
                 resources.getDimensionPixelOffset(R.dimen.bounding_box_corner_radius);
         this.image = image;
@@ -34,16 +34,16 @@ public class LabeledEntity {
 //        return entity.getEntityIndex();
 //    }
 
-    public List<Label> getLabelList() {
-        return labelList;
+    public List<Text> getTextList() {
+        return textList;
     }
 
     public Rect getBoundingBox() {
         return new Rect();
 
     }
-    //
-    public synchronized Bitmap getLabelThumbnail(){
+//
+    public synchronized Bitmap getTextThumbnail(){
         if (image == null) {
             image =
                     Utils.getCornerRoundedBitmap(image, entityThumbnailCornerRadius);
@@ -51,7 +51,7 @@ public class LabeledEntity {
         return image;
     }
 
-    public Bitmap getLabelRectBitmap(){
+    public Bitmap getTextRectBitmap(){
         if (image == null) {
             image =
                     Utils.getCornerRoundedBitmap(image_rect, entityThumbnailCornerRadius);

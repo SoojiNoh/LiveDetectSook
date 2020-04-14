@@ -12,11 +12,9 @@ import android.util.Log;
 import com.n0xx1.livedetect.MainActivity;
 
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Locale;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 public class Text2Speech implements TextToSpeech.OnInitListener{
 
@@ -52,7 +50,7 @@ public class Text2Speech implements TextToSpeech.OnInitListener{
                 @Override
                 public void onDone(String utteranceId) {
                     ((MainActivity)MainActivity).getWorkflowModel().setTtsAvailable(true);
-                    Log.i(TAG, "***TtsAvailable: "+((MainActivity)MainActivity).getWorkflowModel().getTtsAvailable());
+//                    Log.i(TAG, "***TtsAvailable: "+((MainActivity)MainActivity).getWorkflowModel().getTtsAvailable());
                 }
 
                 @Override
@@ -63,7 +61,7 @@ public class Text2Speech implements TextToSpeech.OnInitListener{
                 @Override
                 public void onStart(String utteranceId) {
                     ((MainActivity)MainActivity).getWorkflowModel().setTtsAvailable(false);
-                    Log.i(TAG, "***TtsAvailable: "+((MainActivity)MainActivity).getWorkflowModel().getTtsAvailable());
+//                    Log.i(TAG, "***TtsAvailable: "+((MainActivity)MainActivity).getWorkflowModel().getTtsAvailable());
                 }
 
 
