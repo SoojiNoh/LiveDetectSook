@@ -97,7 +97,7 @@ public class SearchEngine {
     }
 
     private Annotate createRequest(DetectedEntity searchingEntity) throws Exception {
-        byte[] entityImageData = searchingEntity.getImageData();
+        byte[] entityImageData = searchingEntity.getBitmapData();
         if (entityImageData == null) {
             throw new Exception("Failed to get entity image data!");
         }

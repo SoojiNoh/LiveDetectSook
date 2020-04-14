@@ -84,11 +84,11 @@ public class StaticDetectProcessor {
         engine = new StaticDetectEngine(workflowModel.mainActivity, workflowModel, graphicOverlay);
         this.CURRENT_MODE = mainActivity.CURRENT_MODE;
         if (CURRENT_MODE == mainActivity.TEXT_MODE)
-            engine.detectText(request.getImage(), workflowModel);
+            engine.detectText(request.getBitmap(), workflowModel);
         else if (CURRENT_MODE == mainActivity.PROMI_MODE || CURRENT_MODE == mainActivity.MULTI_MODE) {
             Rect coord = request.getEntityObject().getBoundingBox();
-            Bitmap croppedEntity= Bitmap.createBitmap(request.getImage(), coord.left, coord.top, coord.width(), coord.height());
-            request.setCroppedImage(croppedEntity);
+            Bitmap croppedEntity= Bitmap.createBitmap(request.getBitmap(), coord.left, coord.top, coord.width(), coord.height());
+            request.setCroppedBitmap(croppedEntity);
             engine.detectLabel(request, workflowModel);
         }
     }

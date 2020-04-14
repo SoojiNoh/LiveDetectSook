@@ -191,13 +191,13 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
     }
 
     @Override
-    public void onDetectLabelCompleted(List<Label> labels, Bitmap croppedEntity, StaticDetectRequest request) {
+    public void onDetectLabelCompleted(List<Label> labels, StaticDetectRequest request) {
 
         entityIdsToSearch.clear();
         setWorkflowState(WorkflowState.STATIC_SEARCHED);
 
-        LabeledObject labeledObject = new LabeledObject(getContext().getResources(), labels, request.getImage(), croppedEntity);
-        StaticDetectResponse response = new StaticDetectResponse(labeledObject, croppedEntity, request, resources);
+        LabeledObject labeledObject = new LabeledObject(getContext().getResources(), labels, request);
+        StaticDetectResponse response = new StaticDetectResponse(labeledObject, request, resources);
         staticDetectResponse.setValue(response);
 //        labeledObject.setValue(
 //                new LabeledObject(getContext().getResources(), texts, image, null)

@@ -20,14 +20,16 @@ public class LabeledObject {
     @Nullable
     private Bitmap image;
     private Bitmap croppedEntity;
+    private Rect boundingBox;
 
 
-    public LabeledObject(Resources resources, List<Label> labelList, Bitmap image, Bitmap croppedEntity) {
+    public LabeledObject(Resources resources, List<Label> labelList, StaticDetectRequest request) {
         this.labelList = labelList;
         this.entityThumbnailCornerRadius =
                 resources.getDimensionPixelOffset(R.dimen.bounding_box_corner_radius);
-        this.image = image;
-        this.croppedEntity = croppedEntity;
+        this.image = request.getBitmap();
+        this.croppedEntity = request.getCroppedBitmap();
+        this.boundingBox = request.getBoundingBox();
     }
 
 //    public int getEntityIndex() {
@@ -39,7 +41,7 @@ public class LabeledObject {
     }
 
     public Rect getBoundingBox() {
-        return new Rect();
+        return boundingBox;
 
     }
     //

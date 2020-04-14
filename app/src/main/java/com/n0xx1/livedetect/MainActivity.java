@@ -199,7 +199,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 float touchY = event.getY();
 
 //                for(Rect rect : rectangles){
-                    if(thumbnailRect.contains(touchX, touchY)){
+                    if(thumbnailRect!=null && thumbnailRect.contains(touchX, touchY) ){
                         bottomSheetScrimView.zoomInImageFromThumb(expandedImageView, entityThumbnailForZoomView);
                     } else {
                         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
@@ -868,21 +868,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         float viewCoordinateScale;
         float horizontalGap;
         float verticalGap;
+        Bitmap inputBitmap = response.getFullBitmap();
         float inputImageViewRatio = (float) inputImageView.getWidth() / inputImageView.getHeight();
-        float inputBitmapRatio = (float) inputImageView.getWidth() / inputImageView.getHeight();
+        float inputBitmapRatio = (float) inputBitmap.getWidth() / inputBitmap.getHeight();
         if (inputBitmapRatio <= inputImageViewRatio) { // Image content fills height
-            viewCoordinateScale = (float) inputImageView.getHeight() / inputImageView.getHeight();
+            viewCoordinateScale = (float) inputImageView.getHeight() / inputBitmap.getHeight();
             horizontalGap =
-                    (inputImageView.getWidth() - inputImageView.getWidth() * viewCoordinateScale) / 2;
+                    (inputImageView.getWidth() - inputBitmap.getWidth() * viewCoordinateScale) / 2;
             verticalGap = 0;
         } else { // Image content fills width
-            viewCoordinateScale = (float) inputImageView.getWidth() / inputImageView.getWidth();
+            viewCoordinateScale = (float) inputImageView.getWidth() / inputBitmap.getWidth();
             horizontalGap = 0;
             verticalGap =
-                    (inputImageView.getHeight() - inputImageView.getHeight() * viewCoordinateScale) / 2;
+                    (inputImageView.getHeight() - inputBitmap.getHeight() * viewCoordinateScale) / 2;
         }
 
         Rect boundingBox = response.getLabeledObject().getBoundingBox();
+
         RectF boxInViewCoordinate =
                 new RectF(
                         boundingBox.left * viewCoordinateScale + horizontalGap,

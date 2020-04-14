@@ -82,7 +82,7 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
         this.image = image;
     }
 
-    public Bitmap getImage() {return image;}
+    public Bitmap getBitmap() {return image;}
 
     void confirming() {
         if (confirming) {

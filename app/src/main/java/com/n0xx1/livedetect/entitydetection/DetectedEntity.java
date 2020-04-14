@@ -65,7 +65,7 @@ public class DetectedEntity {
     }
 
     @Nullable
-    public synchronized byte[] getImageData() {
+    public synchronized byte[] getBitmapData() {
         if (jpegBytes == null) {
             try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
                 getBitmap().compress(Bitmap.CompressFormat.JPEG, /* quality= */ 100, stream);

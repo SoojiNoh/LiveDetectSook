@@ -56,7 +56,7 @@ public class StaticDetectEngine {
     private static final String ANDROID_PACKAGE_HEADER = "X-Android-Package";
 
     public interface DetectResultListener {
-        void onDetectLabelCompleted(List<Label> labelList, Bitmap image, StaticDetectRequest reqeust);
+        void onDetectLabelCompleted(List<Label> labelList, StaticDetectRequest reqeust);
         void onDetectTextCompleted(List<Text> textList, Bitmap image, Bitmap image_rect);
     }
 
@@ -75,7 +75,7 @@ public class StaticDetectEngine {
 
     }
 
-    public Bitmap getImage(){
+    public Bitmap getBitmap(){
         return image;
     }
 
@@ -107,7 +107,7 @@ public class StaticDetectEngine {
     public void detectLabel(StaticDetectRequest request, DetectResultListener listener){
 
         this.request = request;
-        this.image = request.getCroppedImage();
+        this.image = request.getCroppedBitmap();
         this.mListener = listener;
 
         if (image != null) {
@@ -218,7 +218,7 @@ public class StaticDetectEngine {
                         new Label(mContext.getResources(), image, label.getDescription(), null));
                     }
 //                    Bitmap mBitmapRect = rectBitmap(labels, mBitmap);
-                    mListener.onDetectLabelCompleted(labelList, mBitmap, request);
+                    mListener.onDetectLabelCompleted(labelList, request);
                 } else {
 
                     Log.d(TAG, "no label search result");

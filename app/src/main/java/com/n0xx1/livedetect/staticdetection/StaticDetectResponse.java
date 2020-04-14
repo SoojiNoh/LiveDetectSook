@@ -8,18 +8,19 @@ import com.n0xx1.livedetect.R;
 
 public class StaticDetectResponse {
 
-
-
-    private Bitmap croppedEntity;
+    private Bitmap fullBitmap;
+    private Bitmap croppedBitmap;
     private BoundingPoly rectText;
     private LabeledObject labeledObject;
     private StaticDetectRequest request;
+
     private int objectThumbnailCornerRadius;
 
     TextedObject textedObject;
 
-    public StaticDetectResponse(LabeledObject labeledObject, Bitmap croppedEntity, StaticDetectRequest request, Resources resources){
-        this.croppedEntity = croppedEntity;
+    public StaticDetectResponse(LabeledObject labeledObject, StaticDetectRequest request, Resources resources){
+        this.fullBitmap = request.getBitmap();
+        this.croppedBitmap = request.getCroppedBitmap();
         this.labeledObject = labeledObject;
         this.request = request;
         this.objectThumbnailCornerRadius =
@@ -34,8 +35,11 @@ public class StaticDetectResponse {
 
 
     //GETTER
-    public Bitmap getCroppedImage() {
-        return croppedEntity;
+    public Bitmap getFullBitmap() {
+        return fullBitmap;
+    }
+    public Bitmap getCroppedBitmap() {
+        return croppedBitmap;
     }
 
     public LabeledObject getLabeledObject() {

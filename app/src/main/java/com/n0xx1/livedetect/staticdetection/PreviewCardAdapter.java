@@ -96,7 +96,7 @@ public class PreviewCardAdapter extends RecyclerView.Adapter<PreviewCardAdapter.
 //          imageView.setImageResource(R.drawable.logo_google_cloud);
 //        }
 
-        imageView.setImageBitmap(staticDetectResponses.get(requestId).getCroppedImage());
+        imageView.setImageBitmap(staticDetectResponses.get(requestId).getCroppedBitmap());
 
         titleView.setText(topLabel.label);
         subtitleView.setText(
