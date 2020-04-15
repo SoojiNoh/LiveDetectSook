@@ -107,7 +107,8 @@ public class StaticDetectEngine {
     public void detectLabel(StaticDetectRequest request, DetectResultListener listener){
 
         this.request = request;
-        this.image = request.getCroppedBitmap();
+
+        this.image = (request.getCroppedBitmap()==null)? request.getBitmap() : request.getCroppedBitmap();
         this.mListener = listener;
 
         if (image != null) {
@@ -212,7 +213,6 @@ public class StaticDetectEngine {
                     for (int i = 0; i < labels.size(); i++) {
 
                         EntityAnnotation label = labels.get(i);
-                        Log.d(TAG, "***mLabel"+label);
                         labelList.add(
 //                                new Label(mContext.getResources(), image, label.getDescription(), (ArrayList) label.getBoundingPoly().getVertices()));
                         new Label(mContext.getResources(), image, label.getDescription(), null));
@@ -222,7 +222,8 @@ public class StaticDetectEngine {
                 } else {
 
                     Log.d(TAG, "no label search result");
-                    Toast.makeText(mContext, "no label search result", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(mContext, "찾을 수 없음", Toast.LENGTH_SHORT).show();
+                    workflowModel.mainActivity.tts.speech("찾을 수 없음");
 
                 }
             }

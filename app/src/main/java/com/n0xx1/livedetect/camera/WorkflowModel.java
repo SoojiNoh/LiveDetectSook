@@ -96,6 +96,7 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
     public void setWorkflowState(WorkflowState workflowState) {
         if (!workflowState.equals(WorkflowState.LIVE_CONFIRMED)
                 && !workflowState.equals(WorkflowState.SEARCHING)
+//                && !workflowState.equals(WorkflowState.LIVE_SEARCHED)
                 && !workflowState.equals(WorkflowState.STATIC_SEARCHED)) {
             confirmedEntity = null;
         }
@@ -199,9 +200,6 @@ public class WorkflowModel extends AndroidViewModel implements SearchResultListe
         LabeledObject labeledObject = new LabeledObject(getContext().getResources(), labels, request);
         StaticDetectResponse response = new StaticDetectResponse(labeledObject, request, resources);
         staticDetectResponse.setValue(response);
-//        labeledObject.setValue(
-//                new LabeledObject(getContext().getResources(), texts, image, null)
-//        );
 
     }
 

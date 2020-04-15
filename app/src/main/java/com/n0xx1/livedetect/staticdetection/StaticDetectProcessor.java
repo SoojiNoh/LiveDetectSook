@@ -13,7 +13,6 @@ import com.google.firebase.ml.vision.objects.FirebaseVisionObject;
 import com.google.firebase.ml.vision.objects.FirebaseVisionObjectDetector;
 import com.google.firebase.ml.vision.objects.FirebaseVisionObjectDetectorOptions;
 import com.n0xx1.livedetect.MainActivity;
-import com.n0xx1.livedetect.R;
 import com.n0xx1.livedetect.camera.GraphicOverlay;
 import com.n0xx1.livedetect.camera.WorkflowModel;
 
@@ -41,6 +40,7 @@ public class StaticDetectProcessor {
     public StaticDetectProcessor(GraphicOverlay graphicOverlay, WorkflowModel workflowModel) {
         this.graphicOverlay = graphicOverlay;
         this.workflowModel = workflowModel;
+        this.mainActivity = workflowModel.mainActivity;
         detector =
                 FirebaseVision.getInstance()
                         .getOnDeviceObjectDetector(
@@ -64,8 +64,10 @@ public class StaticDetectProcessor {
         detectedObjectNum = objects.size();
         Log.d(TAG, "Detected objects num: " + detectedObjectNum);
         if (detectedObjectNum == 0) {
-            mainActivity.showBottomPromptChip(mainActivity.getString(R.string.static_image_prompt_detected_no_results));
-            mainActivity.tts.speech(mainActivity.getString(R.string.static_image_prompt_detected_no_results));
+            StaticDetectRequest request = new StaticDetectRequest(0, image, null);
+            workflowModel.staticDetectRequest.setValue(request);
+//            mainActivity.showBottomPromptChip(mainActivity.getString(R.string.static_image_prompt_detected_no_results));
+//            mainActivity.tts.speech(mainActivity.getString(R.string.static_image_prompt_detected_no_results));
         } else {
             staticDetectRequests.clear();
 
@@ -86,9 +88,12 @@ public class StaticDetectProcessor {
         if (CURRENT_MODE == mainActivity.TEXT_MODE)
             engine.detectText(request.getBitmap(), workflowModel);
         else if (CURRENT_MODE == mainActivity.PROMI_MODE || CURRENT_MODE == mainActivity.MULTI_MODE) {
-            Rect coord = request.getEntityObject().getBoundingBox();
-            Bitmap croppedEntity= Bitmap.createBitmap(request.getBitmap(), coord.left, coord.top, coord.width(), coord.height());
-            request.setCroppedBitmap(croppedEntity);
+
+            if (request.getEntityObject()!=null) {
+                Rect coord = request.getEntityObject().getBoundingBox();
+                Bitmap croppedEntity = Bitmap.createBitmap(request.getBitmap(), coord.left, coord.top, coord.width(), coord.height());
+                request.setCroppedBitmap(croppedEntity);
+            }
             engine.detectLabel(request, workflowModel);
         }
     }

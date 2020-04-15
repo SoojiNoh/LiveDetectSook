@@ -112,7 +112,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private View loadingView;
     private Chip bottomPromptChip;
-    private ImageView inputImageView;
+    private ImageView staticImageView;
     private RecyclerView previewCardCarousel;
     private ViewGroup dotViewContainer;
     private int dotViewSize;
@@ -164,7 +164,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         bottomPromptChip = findViewById(R.id.bottom_prompt_chip);
 
-        inputImageView = findViewById(R.id.input_image_view);
+        staticImageView = findViewById(R.id.input_image_view);
         previewCardCarousel = findViewById(R.id.card_recycler_view);
         previewCardCarousel.setHasFixedSize(true);
         previewCardCarousel.setLayoutManager(
@@ -173,6 +173,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         dotViewContainer = findViewById(R.id.dot_view_container);
         dotViewSize = getResources().getDimensionPixelOffset(R.dimen.static_image_dot_view_size);
+        staticImageView.setVisibility(View.GONE);
 
         setUpBottomSheet();
 
@@ -189,26 +190,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tts = new Text2Speech(getApplicationContext(), this);
         searchEngine = new SearchEngine(getApplicationContext(), this);
 
-        bottomSheetScrimView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if (event.getAction() == MotionEvent.ACTION_DOWN && CURRENT_MODE != BARCODE_MODE){
-                    RectF thumbnailRect = bottomSheetScrimView.getThumbnailRect();
-
-                float touchX = event.getX();
-                float touchY = event.getY();
-
-//                for(Rect rect : rectangles){
-                    if(thumbnailRect!=null && thumbnailRect.contains(touchX, touchY) ){
-                        bottomSheetScrimView.zoomInImageFromThumb(expandedImageView, entityThumbnailForZoomView);
-                    } else {
-                        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
-                    }
-//                }
-                }
-                return true;
-            }
-        });
+        setOnTouchListener();
 
         setUpWorkflowModel();
         workflowModel.mainActivity = this;
@@ -227,13 +209,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onResume() {
         super.onResume();
 
+        cameraSource = new CameraSource(graphicOverlay);
         workflowModel.markCameraFrozen();
         settingsButton.setEnabled(true);
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
         currentWorkflowState = WorkflowState.NOT_STARTED;
 
-        setEntityMode();
+        setProcessor(CURRENT_MODE);
         workflowModel.setWorkflowState(WorkflowState.DETECTING);
+
+        startCameraPreview();
 
     }
 
@@ -241,7 +226,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onPause() {
         super.onPause();
         currentWorkflowState = WorkflowState.NOT_STARTED;
-//        stopCameraPreview();
+        stopCameraPreview();
     }
 
     @Override
@@ -351,7 +336,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                         switch (newState) {
                             case BottomSheetBehavior.STATE_HIDDEN:
-                                workflowModel.setWorkflowState(WorkflowState.DETECTING);
+                                if(staticImageView.getVisibility()==View.GONE)
+                                    workflowModel.setWorkflowState(WorkflowState.DETECTING);
                                 break;
                             case BottomSheetBehavior.STATE_COLLAPSED:
                             case BottomSheetBehavior.STATE_EXPANDED:
@@ -454,7 +440,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
 
                         String result="";
-                            for(int i=0 ; i<productList.size(); i++){
+                            for(int i=0 ; i<3 || i<productList.size(); i++){
                                 if (i!=0) result+="혹은 ";
                                 result+=productList.get(i).getTitle();
                             }
@@ -531,13 +517,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //        );
         workflowModel.staticDetectBitmap.observe(
                 this, bitmap -> {
-                    inputImageView.setImageDrawable(null);
+                    staticImageView.setImageDrawable(null);
                     previewCardCarousel.setAdapter(new PreviewCardAdapter(ImmutableList.of(), this));
                     previewCardCarousel.clearOnScrollListeners();
                     dotViewContainer.removeAllViews();
                     currentSelectedObjectIndex = 0;
 
-                    inputImageView.setImageBitmap(bitmap);
+                    staticImageView.setVisibility(View.VISIBLE);
+                    searchProgressBar.setVisibility(View.VISIBLE);
+                    staticImageView.setImageBitmap(bitmap);
+
                     staticDetectProcessor.detectEntityRegion(bitmap);
                 }
         );
@@ -552,6 +541,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         workflowModel.staticDetectResponse.observe(this,
                 response -> {
+                    searchProgressBar.setVisibility(View.GONE);
                     if (response.getLabeledObject()!=null){
                         staticDetectProcessor.onStaticDetectCompleted(response.getRequest(), response);
                     } else {
@@ -705,6 +695,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case LIVE_SEARCHED:
                 promptChip.setVisibility(View.GONE);
                 searchButton.setVisibility(View.GONE);
+//                stopCameraPreview();
+                break;
+            case STATIC_SEARCHED:
+                promptChip.setVisibility(View.GONE);
+                searchButton.setVisibility(View.GONE);
                 stopCameraPreview();
                 break;
             default:
@@ -775,6 +770,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void StaticDetectCardView(){
         showBottomPromptChip(getString(R.string.static_image_prompt_detected_results));
 
+        previewCardCarousel.setVisibility(View.VISIBLE);
+        dotViewContainer.setVisibility(View.VISIBLE);
         previewCardCarousel.setAdapter(
                 new PreviewCardAdapter(ImmutableList.copyOf(detectedResultMap.values()), this));
 
@@ -799,23 +796,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 });
 
         for (StaticDetectResponse response : detectedResultMap.values()) {
-            StaticObjectDotView dotView = createDotView(response);
-            dotView.setOnClickListener(
-                    v -> {
-                        if (response.getRequest().getRequestIndex() == currentSelectedObjectIndex) {
-                            showCardResults(response);
-                        } else {
-                            selectNewObject(response.getRequest().getRequestIndex());
-                            showCardResults(response);
-                            previewCardCarousel.smoothScrollToPosition(response.getRequest().getRequestIndex());
-                        }
-                    });
+            if (response.getCroppedBitmap()!=null) {
+                StaticObjectDotView dotView = createDotView(response);
+                dotView.setOnClickListener(
+                        v -> {
+                            if (response.getRequest().getRequestIndex() == currentSelectedObjectIndex) {
+                                showCardResults(response);
+                            } else {
+                                selectNewObject(response.getRequest().getRequestIndex());
+                                showCardResults(response);
+                                previewCardCarousel.smoothScrollToPosition(response.getRequest().getRequestIndex());
+                            }
+                        });
 
-            dotViewContainer.addView(dotView);
-            AnimatorSet animatorSet =
-                    ((AnimatorSet) AnimatorInflater.loadAnimator(this, R.animator.static_image_dot_enter));
-            animatorSet.setTarget(dotView);
-            animatorSet.start();
+                dotViewContainer.addView(dotView);
+                AnimatorSet animatorSet =
+                        ((AnimatorSet) AnimatorInflater.loadAnimator(this, R.animator.static_image_dot_enter));
+                animatorSet.setTarget(dotView);
+                animatorSet.start();
+            }
         }
 
 
@@ -831,7 +830,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         .getQuantityString(
                                 R.plurals.bottom_sheet_title, labelList.size(), labelList.size()));
         recyclerView.setAdapter(new LabelAdapter(labelList));
-        bottomSheetBehavior.setPeekHeight(((View) inputImageView.getParent()).getHeight() / 2);
+        bottomSheetBehavior.setPeekHeight(((View) staticImageView.getParent()).getHeight() / 2);
         bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
     }
 
@@ -869,18 +868,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         float horizontalGap;
         float verticalGap;
         Bitmap inputBitmap = response.getFullBitmap();
-        float inputImageViewRatio = (float) inputImageView.getWidth() / inputImageView.getHeight();
+        float staticImageViewRatio = (float) staticImageView.getWidth() / staticImageView.getHeight();
         float inputBitmapRatio = (float) inputBitmap.getWidth() / inputBitmap.getHeight();
-        if (inputBitmapRatio <= inputImageViewRatio) { // Image content fills height
-            viewCoordinateScale = (float) inputImageView.getHeight() / inputBitmap.getHeight();
+        if (inputBitmapRatio <= staticImageViewRatio) { // Image content fills height
+            viewCoordinateScale = (float) staticImageView.getHeight() / inputBitmap.getHeight();
             horizontalGap =
-                    (inputImageView.getWidth() - inputBitmap.getWidth() * viewCoordinateScale) / 2;
+                    (staticImageView.getWidth() - inputBitmap.getWidth() * viewCoordinateScale) / 2;
             verticalGap = 0;
         } else { // Image content fills width
-            viewCoordinateScale = (float) inputImageView.getWidth() / inputBitmap.getWidth();
+            viewCoordinateScale = (float) staticImageView.getWidth() / inputBitmap.getWidth();
             horizontalGap = 0;
             verticalGap =
-                    (inputImageView.getHeight() - inputBitmap.getHeight() * viewCoordinateScale) / 2;
+                    (staticImageView.getHeight() - inputBitmap.getHeight() * viewCoordinateScale) / 2;
         }
 
         Rect boundingBox = response.getLabeledObject().getBoundingBox();
@@ -921,6 +920,69 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void showBottomPromptChip(String message) {
         bottomPromptChip.setVisibility(View.VISIBLE);
         bottomPromptChip.setText(message);
+    }
+
+    private void setOnTouchListener(){
+        bottomSheetScrimView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+
+                float touchX = event.getX();
+                float touchY = event.getY();
+
+                if (event.getAction() == MotionEvent.ACTION_DOWN){
+                    if (bottomSheetBehavior.getState() != BottomSheetBehavior.STATE_HIDDEN){
+                        onBackPressed();
+                    }
+                    RectF thumbnailRect = bottomSheetScrimView.getThumbnailRect();
+                    if(thumbnailRect!=null)
+                        if(thumbnailRect.contains(touchX, touchY) ){
+                            bottomSheetScrimView.zoomInImageFromThumb(expandedImageView, entityThumbnailForZoomView);
+                        } else {
+                            bottomSheetBehavior.setState(BottomSheetBehavior.STATE_HIDDEN);
+                        }
+                }
+                return true;
+            }
+        });
+
+        staticImageView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+
+                float startTouch = 0, endTouch = 0, currentTouch = 0, deltaY=0, initialY=0;
+                final int MIN_DISTANCE = -1000;
+                if(staticImageView.getDrawable() != null) {
+                    currentTouch = event.getY();
+                    switch (event.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                            startTouch = event.getY();
+                            initialY = staticImageView.getY();
+                            break;
+                        case MotionEvent.ACTION_UP:
+                            endTouch = event.getY();
+                            deltaY = startTouch - endTouch;
+                            if (deltaY < MIN_DISTANCE) {
+
+                                dotViewContainer.removeAllViews();
+                                staticImageView.setVisibility(View.GONE);
+                                previewCardCarousel.setVisibility(View.GONE);
+                                dotViewContainer.setVisibility(View.GONE);
+
+                                workflowModel.setWorkflowState(WorkflowState.DETECTING);
+                            } else {
+//                                staticImageView.setY(initialY);
+                                // consider as something else - a screen tap for example
+                            }
+                            break;
+                        case MotionEvent.ACTION_MOVE:
+                            staticImageView.setTranslationY(initialY+currentTouch-startTouch);
+                    }
+                    graphicOverlay.invalidate();
+                }
+                return true;
+            }
+        });
     }
 
 

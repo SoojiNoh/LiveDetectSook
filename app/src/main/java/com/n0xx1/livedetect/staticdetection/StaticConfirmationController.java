@@ -162,7 +162,7 @@ public class StaticConfirmationController extends TouchTimer implements View.OnT
             }
             else
                 workflowModel.setWorkflowState(WorkflowState.STATIC_CONFIRMED);
-//                workflowModel.setWorkflowState(WorkflowState.LIVE_LIVE_CONFIRMED);
+//                workflowModel.setWorkflowState(WorkflowState.LIVE_CONFIRMED);
 
         }
 

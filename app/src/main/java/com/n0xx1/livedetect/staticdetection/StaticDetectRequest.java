@@ -20,8 +20,11 @@ public class StaticDetectRequest {
     public StaticDetectRequest(int requestIndex, FirebaseVisionImage image, FirebaseVisionObject entity){
         this.requestIndex = requestIndex;
         this.image = image;
-        this.entity = entity;
-        this.boundingBox = entity.getBoundingBox();
+        if (entity!=null){
+            this.entity = entity;
+            this.boundingBox = entity.getBoundingBox();
+        }
+
     }
 
     public StaticDetectRequest(FirebaseVisionImage image, FirebaseVisionText text){
